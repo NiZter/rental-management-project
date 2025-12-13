@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
 
+# --- 1. USER ---
 class User(Base):
     __tablename__ = "users"
 
@@ -12,38 +13,57 @@ class User(Base):
     full_name = Column(String)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
-    role = Column(String, default="owner") # owner (chủ trọ) hoặc tenant (khách thuê)
+    role = Column(String, default="user") 
 
-    # Quan hệ ngược
     properties = relationship("Property", back_populates="owner")
     contracts = relationship("Contract", back_populates="tenant")
 
+# --- 2. PROPERTY ---
 class Property(Base):
     __tablename__ = "properties"
     
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True) # Ví dụ: Phòng 101, Nhà Nguyên Căn A
+    name = Column(String, index=True)
     address = Column(String)
-    price = Column(Float)
-    status = Column(String, default="available") # available, rented, maintaining
     description = Column(String, nullable=True)
+    price = Column(Float)
+    status = Column(String, default="available") 
     
     owner_id = Column(Integer, ForeignKey("users.id"))
     
     owner = relationship("User", back_populates="properties")
     contracts = relationship("Contract", back_populates="property")
 
+# --- 3. CONTRACT ---
 class Contract(Base):
     __tablename__ = "contracts"
-
+    
     id = Column(Integer, primary_key=True, index=True)
     property_id = Column(Integer, ForeignKey("properties.id"))
     tenant_id = Column(Integer, ForeignKey("users.id"))
     
     start_date = Column(Date)
     end_date = Column(Date)
-    deposit = Column(Float, default=0) # Tiền cọc
+    deposit = Column(Float, default=0)
     is_active = Column(Boolean, default=True)
-    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
     property = relationship("Property", back_populates="contracts")
     tenant = relationship("User", back_populates="contracts")
+    
+    # Quan hệ với bảng Payment (Cần thêm dòng này)
+    payments = relationship("Payment", back_populates="contract")
+
+# --- 4. PAYMENT (MỚI THÊM) ---
+class Payment(Base):
+    __tablename__ = "payments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    contract_id = Column(Integer, ForeignKey("contracts.id"))
+    
+    amount = Column(Float)
+    payment_date = Column(Date)
+    note = Column(String, nullable=True)
+    is_paid = Column(Boolean, default=True)
+
+    contract = relationship("Contract", back_populates="payments")

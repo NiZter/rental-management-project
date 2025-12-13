@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import date
 
+# Import các module cùng thư mục
 from . import models, schemas, database
 
 app = FastAPI(title="Rental Management System (De Tai 17)")
@@ -24,6 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Tạo bảng database
 models.Base.metadata.create_all(bind=database.engine)
 
 def get_db():
@@ -80,7 +82,7 @@ def read_properties(skip: int = 0, limit: int = 100, db: Session = Depends(get_d
     properties = db.query(models.Property).offset(skip).limit(limit).all()
     return properties
 
-# --- API CONTRACT (ĐÃ FIX LỖI 500) ---
+# --- API CONTRACT ---
 @app.post("/contracts/", response_model=schemas.ContractResponse)
 def create_contract(contract: schemas.ContractCreate, db: Session = Depends(get_db)):
     # 1. Tìm nhà
@@ -91,7 +93,7 @@ def create_contract(contract: schemas.ContractCreate, db: Session = Depends(get_
     if db_property.status != "available":
         raise HTTPException(status_code=400, detail="Nhà này đang có người thuê hoặc bảo trì rồi!")
 
-    # 2. Tìm khách thuê qua email
+    # 2. Tìm khách thuê
     tenant = db.query(models.User).filter(models.User.email == contract.tenant_email).first()
     if not tenant:
         raise HTTPException(status_code=404, detail="Email khách thuê chưa đăng ký hệ thống")
@@ -102,24 +104,21 @@ def create_contract(contract: schemas.ContractCreate, db: Session = Depends(get_
         tenant_id=tenant.id,
         start_date=contract.start_date,
         end_date=contract.end_date,
-        deposit=contract.deposit_amount, # Map đúng trường deposit từ input
+        deposit=contract.deposit_amount,
         is_active=True
     )
     
     # 4. Cập nhật trạng thái nhà
     db_property.status = "rented"
     
-    # --- KHU VỰC SỬA LỖI ---
     try:
         db.add(new_contract)
-        db.add(db_property) # Báo cho DB biết thằng này cũng bị sửa
-        
-        db.flush() # Đẩy SQL xuống trước để lấy ID (chưa chốt)
-        db.refresh(new_contract) # Lấy lại thông tin (ID, created_at)
-        
-        db.commit() # Giờ mới chốt đơn (Commit transaction)
+        db.add(db_property)
+        db.flush()
+        db.refresh(new_contract)
+        db.commit()
     except Exception as e:
-        db.rollback() # Có biến thì hoàn tác hết
+        db.rollback()
         raise HTTPException(status_code=500, detail=f"Lỗi lưu DB: {str(e)}")
     
     return new_contract
@@ -128,3 +127,28 @@ def create_contract(contract: schemas.ContractCreate, db: Session = Depends(get_
 def read_contracts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     contracts = db.query(models.Contract).offset(skip).limit(limit).all()
     return contracts
+
+# --- API PAYMENT ---
+@app.post("/payments/", response_model=schemas.PaymentResponse)
+def create_payment(payment: schemas.PaymentCreate, db: Session = Depends(get_db)):
+    # Check hợp đồng có tồn tại không
+    contract = db.query(models.Contract).filter(models.Contract.id == payment.contract_id).first()
+    if not contract:
+        raise HTTPException(status_code=404, detail="Hợp đồng không tồn tại")
+
+    new_payment = models.Payment(
+        contract_id=payment.contract_id,
+        amount=payment.amount,
+        payment_date=payment.payment_date,
+        note=payment.note,
+        is_paid=True
+    )
+    db.add(new_payment)
+    db.commit()
+    db.refresh(new_payment)
+    return new_payment
+
+@app.get("/contracts/{contract_id}/payments", response_model=List[schemas.PaymentResponse])
+def read_payments_by_contract(contract_id: int, db: Session = Depends(get_db)):
+    payments = db.query(models.Payment).filter(models.Payment.contract_id == contract_id).all()
+    return payments

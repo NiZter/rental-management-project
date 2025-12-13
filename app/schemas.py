@@ -35,24 +35,36 @@ class PropertyResponse(PropertyBase):
     class Config:
         from_attributes = True
 
-# --- Contract Schemas (ĐÃ SỬA LẠI CHO KHỚP) ---
+# --- Contract Schemas ---
 class ContractBase(BaseModel):
     start_date: date
     end_date: date
 
-# Schema dùng khi tạo (Input từ JS gửi lên)
 class ContractCreate(ContractBase):
     property_id: int
-    tenant_email: str       # Khớp với JS gửi email
-    deposit_amount: float   # Khớp với JS gửi deposit_amount
+    tenant_email: str
+    deposit_amount: float
 
-# Schema dùng khi trả về (Output từ DB ra)
 class ContractResponse(ContractBase):
     id: int
     property_id: int
     tenant_id: int
-    deposit: float          # Trong DB tên cột là deposit
+    deposit: float
     is_active: bool
-    
+    class Config:
+        from_attributes = True
+
+# --- Payment Schemas ---
+class PaymentBase(BaseModel):
+    amount: float
+    payment_date: date
+    note: Optional[str] = None
+
+class PaymentCreate(PaymentBase):
+    contract_id: int
+
+class PaymentResponse(PaymentBase):
+    id: int
+    is_paid: bool
     class Config:
         from_attributes = True

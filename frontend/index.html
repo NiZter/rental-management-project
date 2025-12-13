@@ -3,56 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Nhà Trọ (Demo)</title>
+    <title>Quản Lý Nhà Trọ (NiZter Group)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .contract-item { cursor: pointer; transition: 0.2s; }
+        .contract-item:hover { background-color: #e9ecef; transform: translateX(5px); }
+        .dashboard-card { border-left: 5px solid; }
+    </style>
 </head>
 <body class="bg-light">
     <div class="container-fluid mt-4">
-        <h2 class="text-center mb-4">🏠 Hệ Thống Quản Lý Nhà Trọ - Nhóm NiZter</h2>
+        <!-- HEADER & DASHBOARD -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-primary fw-bold m-0">🏠 QUẢN LÝ NHÀ TRỌ</h2>
+            <div class="card shadow-sm px-4 py-2 bg-success text-white">
+                <small>TỔNG DOANH THU</small>
+                <h3 class="m-0 fw-bold" id="totalRevenue">0 đ</h3>
+            </div>
+        </div>
         
         <div class="row">
             <!-- CỘT 1: QUẢN LÝ NHÀ -->
-            <div class="col-md-4">
-                <div class="card p-3 shadow-sm mb-3">
-                    <h5 class="text-primary">1. Thêm Nhà Mới</h5>
+            <div class="col-md-3">
+                <div class="card p-3 shadow-sm mb-3 border-0 dashboard-card border-primary">
+                    <h5 class="text-primary fw-bold">1. Thêm Nhà Mới</h5>
                     <form id="propertyForm">
                         <div class="mb-2">
-                            <input type="text" class="form-control" id="propName" required placeholder="Tên phòng (VD: P101)">
+                            <input type="text" class="form-control form-control-sm" id="propName" required placeholder="Tên phòng (VD: P101)">
                         </div>
                         <div class="mb-2">
-                            <input type="text" class="form-control" id="propAddress" required placeholder="Địa chỉ">
+                            <input type="text" class="form-control form-control-sm" id="propAddress" required placeholder="Địa chỉ">
                         </div>
                         <div class="mb-2">
-                            <input type="number" class="form-control" id="propPrice" required placeholder="Giá thuê">
+                            <input type="number" class="form-control form-control-sm" id="propPrice" required placeholder="Giá thuê">
                         </div>
-                        <input type="hidden" id="ownerId" value="1">
-                        <button type="submit" class="btn btn-primary w-100">Lưu Nhà</button>
+                        <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">💾 Lưu Nhà</button>
                     </form>
                 </div>
 
-                <div class="card p-3 shadow-sm">
-                    <h5 class="text-success">Công cụ Test Nhanh</h5>
-                    <button onclick="createMockUser()" class="btn btn-outline-secondary btn-sm mb-2">
-                        🛠️ Tạo Chủ Trọ (Admin)
-                    </button>
-                    <button onclick="createTenant()" class="btn btn-outline-success btn-sm">
-                        👤 Tạo Khách Thuê (Tenant)
-                    </button>
-                    <small class="text-muted d-block mt-2">*Bấm 2 nút này trước khi test</small>
+                <div class="card p-3 shadow-sm border-0">
+                    <h6 class="text-muted fw-bold">TOOLS</h6>
+                    <div class="d-grid gap-2">
+                        <button onclick="createMockUser()" class="btn btn-outline-secondary btn-sm">🛠️ Tạo Admin</button>
+                        <button onclick="createTenant()" class="btn btn-outline-success btn-sm">👤 Tạo Khách Thuê</button>
+                    </div>
                 </div>
             </div>
 
             <!-- CỘT 2: DANH SÁCH NHÀ -->
-            <div class="col-md-4">
-                <div class="card p-3 shadow-sm h-100">
-                    <h5>Danh Sách Phòng</h5>
+            <div class="col-md-5">
+                <div class="card p-3 shadow-sm h-100 border-0">
+                    <h5 class="fw-bold text-secondary">Danh Sách Phòng Trọ</h5>
                     <div class="table-responsive">
-                        <table class="table table-sm table-hover">
-                            <thead>
+                        <table class="table table-hover align-middle small">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Tên</th>
-                                    <th>Giá</th>
+                                    <th>Phòng</th>
+                                    <th>Giá thuê</th>
                                     <th>TT</th>
                                 </tr>
                             </thead>
@@ -62,48 +70,99 @@
                 </div>
             </div>
 
-            <!-- CỘT 3: TẠO HỢP ĐỒNG (MỚI) -->
+            <!-- CỘT 3: HỢP ĐỒNG & THANH TOÁN -->
             <div class="col-md-4">
-                <div class="card p-3 shadow-sm mb-3 bg-white">
-                    <h5 class="text-danger">2. Lập Hợp Đồng Thuê</h5>
+                <div class="card p-3 shadow-sm mb-3 border-0 dashboard-card border-danger bg-white">
+                    <h5 class="text-danger fw-bold">2. Ký Hợp Đồng</h5>
                     <form id="contractForm">
                         <div class="mb-2">
-                            <label class="small">Chọn Nhà (Chỉ hiện nhà trống)</label>
-                            <select class="form-select" id="contractPropId" required>
-                                <option value="">-- Chọn phòng --</option>
+                            <select class="form-select form-select-sm" id="contractPropId" required>
+                                <option value="">-- Chọn phòng trống --</option>
                             </select>
                         </div>
                         <div class="mb-2">
-                            <label class="small">Email Khách Thuê</label>
-                            <input type="email" class="form-control" id="contractEmail" 
-                                   value="khach@thue.com" required placeholder="Email khách">
+                            <input type="email" class="form-control form-control-sm" id="contractEmail" value="khach@thue.com" required placeholder="Email khách">
                         </div>
-                        <div class="row">
-                            <div class="col-6 mb-2">
-                                <label class="small">Bắt đầu</label>
-                                <input type="date" class="form-control" id="startDate" required>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <input type="date" class="form-control form-control-sm" id="startDate" required>
                             </div>
-                            <div class="col-6 mb-2">
-                                <label class="small">Kết thúc</label>
-                                <input type="date" class="form-control" id="endDate" required>
+                            <div class="col-6">
+                                <input type="date" class="form-control form-control-sm" id="endDate" required>
                             </div>
                         </div>
                         <div class="mb-2">
-                            <input type="number" class="form-control" id="deposit" placeholder="Tiền cọc (VNĐ)">
+                            <input type="number" class="form-control form-control-sm" id="deposit" placeholder="Tiền cọc">
                         </div>
-                        <button type="submit" class="btn btn-danger w-100">Ký Hợp Đồng</button>
+                        <button type="submit" class="btn btn-danger btn-sm w-100 fw-bold">✍️ Ký Ngay</button>
                     </form>
                 </div>
 
-                <div class="card p-3 shadow-sm">
-                    <h5>Hợp Đồng Đang Chạy</h5>
+                <div class="card p-3 shadow-sm border-0">
+                    <h5 class="fw-bold">Hợp Đồng (Thu Tiền)</h5>
+                    <div class="alert alert-info py-1 px-2 small mb-2">💡 Click vào hợp đồng để thu tiền</div>
                     <ul id="contractList" class="list-group list-group-flush small">
-                        <!-- List hợp đồng sẽ hiện ở đây -->
+                        <!-- List hợp đồng sẽ đổ vào đây -->
                     </ul>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- MODAL POPUP: QUẢN LÝ THANH TOÁN -->
+    <div class="modal fade" id="paymentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">💰 Thu Tiền - Hợp Đồng #<span id="modalContractId"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Form Đóng Tiền -->
+                        <div class="col-md-4 border-end">
+                            <h6 class="fw-bold text-success">Phiếu thu mới</h6>
+                            <form id="paymentForm">
+                                <input type="hidden" id="payContractId">
+                                <div class="mb-2">
+                                    <label class="small">Số tiền</label>
+                                    <input type="number" class="form-control" id="payAmount" required>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="small">Ngày thu</label>
+                                    <input type="date" class="form-control" id="payDate" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="small">Nội dung</label>
+                                    <input type="text" class="form-control" id="payNote" placeholder="VD: Tiền nhà T11">
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">Xác nhận thu</button>
+                            </form>
+                        </div>
+                        <!-- Lịch Sử -->
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold m-0">Lịch sử giao dịch</h6>
+                                <span class="badge bg-secondary" id="totalPaidDisplay">Tổng đã đóng: 0đ</span>
+                            </div>
+                            <table class="table table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Ngày</th>
+                                        <th>Nội dung</th>
+                                        <th>Số tiền</th>
+                                        <th>TT</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentHistoryList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>

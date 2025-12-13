@@ -1,173 +1,196 @@
 const API_URL = "http://localhost:8000";
+const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
 
-// --- 1. LOAD DANH SÁCH NHÀ (Properties) ---
+// --- 1. LOAD NHÀ & DOANH THU ---
 async function loadProperties() {
     try {
         const res = await fetch(`${API_URL}/properties/`);
         const data = await res.json();
-        
         const listBody = document.getElementById("propertyList");
         const selectBox = document.getElementById("contractPropId");
         
-        // Reset giao diện
         listBody.innerHTML = "";
         selectBox.innerHTML = '<option value="">-- Chọn phòng --</option>';
 
         data.forEach(prop => {
-            // A. Vẽ bảng danh sách nhà
-            let badgeClass = prop.status === 'available' ? 'bg-success' : 'bg-secondary';
-            let statusText = prop.status === 'available' ? 'Trống' : 'Đã thuê';
+            let badge = prop.status === 'available' 
+                ? '<span class="badge bg-success">Trống</span>' 
+                : '<span class="badge bg-secondary">Đã thuê</span>';
             
-            const row = `
+            listBody.innerHTML += `
                 <tr>
-                    <td>${prop.id}</td>
-                    <td><strong>${prop.name}</strong><br><small>${prop.address}</small></td>
-                    <td>${prop.price.toLocaleString()}</td>
-                    <td><span class="badge ${badgeClass}">${statusText}</span></td>
+                    <td><strong>${prop.name}</strong><br><small class="text-muted">${prop.address}</small></td>
+                    <td class="text-primary fw-bold">${prop.price.toLocaleString()}</td>
+                    <td>${badge}</td>
                 </tr>
             `;
-            listBody.innerHTML += row;
 
-            // B. Đổ dữ liệu vào Dropdown chọn phòng (Chỉ hiện nhà còn trống)
             if (prop.status === 'available') {
-                const option = `<option value="${prop.id}">${prop.name} - ${prop.price}đ</option>`;
-                selectBox.innerHTML += option;
+                selectBox.innerHTML += `<option value="${prop.id}">${prop.name} - ${prop.price}đ</option>`;
             }
         });
-    } catch (error) { 
-        console.error("Lỗi load nhà:", error); 
-    }
+    } catch (e) { console.error(e); }
 }
 
-// --- 2. LOAD DANH SÁCH HỢP ĐỒNG (Contracts) - ĐÃ SỬA LOGIC ---
+// --- 2. LOAD HỢP ĐỒNG ---
 async function loadContracts() {
     try {
         const res = await fetch(`${API_URL}/contracts/`);
         const data = await res.json();
-        
         const list = document.getElementById("contractList");
-        list.innerHTML = ""; // Xóa danh sách cũ
+        list.innerHTML = "";
+        
+        // Biến tính tổng doanh thu
+        let totalSystemRevenue = 0;
 
-        data.forEach(c => {
-            // Lưu ý: Backend trả về 'deposit' (theo tên cột DB), chứ không phải 'deposit_amount'
-            // Nên ở đây phải dùng c.deposit
-            const tienCoc = c.deposit ? c.deposit.toLocaleString() : "0";
+        // Dùng for...of để có thể await bên trong (lấy payment của từng HĐ)
+        for (const c of data) {
+            // Lấy tổng tiền đã đóng của hợp đồng này để cộng vào doanh thu tổng
+            const payments = await getPayments(c.id);
+            const paidAmount = payments.reduce((sum, p) => sum + p.amount, 0);
+            totalSystemRevenue += paidAmount;
 
             list.innerHTML += `
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>Hợp đồng #${c.id}</strong><br>
-                        <small>
-                            Phòng ID: ${c.property_id} | Khách ID: ${c.tenant_id} <br>
-                            Tiền cọc: <span class="text-danger fw-bold">${tienCoc} đ</span>
-                        </small>
+                <li class="list-group-item list-group-item-action contract-item" onclick="openPaymentModal(${c.id})">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>HĐ #${c.id}</strong> <small class="text-muted">(Phòng ID: ${c.property_id})</small><br>
+                            <small>Đã thu: <span class="text-success fw-bold">${paidAmount.toLocaleString()}đ</span></small>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">Thu tiền</span>
                     </div>
-                    <span class="badge bg-primary">Active</span>
                 </li>
             `;
-        });
-    } catch (e) { 
-        console.error("Lỗi load hợp đồng:", e); 
-    }
+        }
+
+        // Cập nhật lên Dashboard
+        document.getElementById("totalRevenue").innerText = totalSystemRevenue.toLocaleString() + " đ";
+
+    } catch (e) { console.error(e); }
 }
 
-// --- 3. XỬ LÝ FORM THÊM NHÀ ---
+// Hàm phụ: Lấy list payment của 1 hợp đồng
+async function getPayments(contractId) {
+    try {
+        const res = await fetch(`${API_URL}/contracts/${contractId}/payments`);
+        return await res.json();
+    } catch { return []; }
+}
+
+// --- 3. MODAL THANH TOÁN ---
+async function openPaymentModal(contractId) {
+    document.getElementById('modalContractId').innerText = contractId;
+    document.getElementById('payContractId').value = contractId;
+    document.getElementById('payDate').valueAsDate = new Date();
+    
+    // Load lịch sử chi tiết
+    const payments = await getPayments(contractId);
+    const historyBody = document.getElementById('paymentHistoryList');
+    historyBody.innerHTML = "";
+
+    let totalPaid = 0;
+
+    if(payments.length === 0) {
+        historyBody.innerHTML = "<tr><td colspan='4' class='text-center text-muted'>Chưa có giao dịch</td></tr>";
+    } else {
+        payments.forEach(p => {
+            totalPaid += p.amount;
+            historyBody.innerHTML += `
+                <tr>
+                    <td>${p.payment_date}</td>
+                    <td>${p.note || '-'}</td>
+                    <td class="text-success fw-bold">+${p.amount.toLocaleString()}</td>
+                    <td>✅</td>
+                </tr>
+            `;
+        });
+    }
+    
+    document.getElementById('totalPaidDisplay').innerText = `Tổng đã đóng: ${totalPaid.toLocaleString()}đ`;
+    paymentModal.show();
+}
+
+// --- 4. XỬ LÝ FORM SUBMIT ---
+// Thu tiền
+document.getElementById("paymentForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const contractId = document.getElementById("payContractId").value;
+    const payload = {
+        contract_id: parseInt(contractId),
+        amount: parseFloat(document.getElementById("payAmount").value),
+        payment_date: document.getElementById("payDate").value,
+        note: document.getElementById("payNote").value
+    };
+
+    const res = await fetch(`${API_URL}/payments/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+        alert("Đã thu tiền thành công!");
+        document.getElementById("payAmount").value = "";
+        openPaymentModal(contractId); // Reload lại modal để thấy dòng mới
+        loadContracts(); // Reload lại dashboard để cập nhật tổng doanh thu
+    } else {
+        alert("Lỗi server");
+    }
+});
+
+// Thêm nhà
 document.getElementById("propertyForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const payload = {
         name: document.getElementById("propName").value,
         address: document.getElementById("propAddress").value,
         price: parseFloat(document.getElementById("propPrice").value),
-        description: "Mô tả mẫu"
+        description: "Mô tả"
     };
-
-    try {
-        const res = await fetch(`${API_URL}/properties/?owner_id=1`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        if (res.ok) {
-            alert("Thêm nhà thành công!");
-            loadProperties();
-            document.getElementById("propertyForm").reset();
-        } else {
-            alert("Lỗi thêm nhà");
-        }
-    } catch (err) { console.error(err); }
+    await fetch(`${API_URL}/properties/?owner_id=1`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+    });
+    alert("Thêm nhà thành công!");
+    loadProperties();
+    document.getElementById("propertyForm").reset();
 });
 
-// --- 4. XỬ LÝ FORM KÝ HỢP ĐỒNG (QUAN TRỌNG) ---
+// Ký hợp đồng
 document.getElementById("contractForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-
-    // Lấy dữ liệu từ form
-    const propId = document.getElementById("contractPropId").value;
-    const email = document.getElementById("contractEmail").value;
-    const start = document.getElementById("startDate").value;
-    const end = document.getElementById("endDate").value;
-    const deposit = document.getElementById("deposit").value;
-
-    // Validate cơ bản
-    if (!propId) { alert("Vui lòng chọn phòng!"); return; }
-    if (!start || !end) { alert("Vui lòng chọn ngày!"); return; }
-
-    // Payload gửi đi: Phải dùng 'deposit_amount' để khớp với Schema input
     const payload = {
-        property_id: parseInt(propId),
-        tenant_email: email,
-        start_date: start,
-        end_date: end,
-        deposit_amount: parseFloat(deposit) || 0 
+        property_id: parseInt(document.getElementById("contractPropId").value),
+        tenant_email: document.getElementById("contractEmail").value,
+        start_date: document.getElementById("startDate").value,
+        end_date: document.getElementById("endDate").value,
+        deposit_amount: parseFloat(document.getElementById("deposit").value) || 0
     };
+    
+    const res = await fetch(`${API_URL}/contracts/`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+    });
 
-    try {
-        const res = await fetch(`${API_URL}/contracts/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        if (res.ok) {
-            alert("✅ Ký hợp đồng thành công! Nhà đã cập nhật trạng thái.");
-            
-            // Gọi lại 2 hàm này để làm mới dữ liệu ngay lập tức
-            await loadProperties(); // Để nhà vừa thuê biến mất khỏi list trống
-            await loadContracts();  // Để hợp đồng mới hiện ra list bên dưới
-            
-            document.getElementById("contractForm").reset();
-        } else {
-            const err = await res.json();
-            // Hiển thị lỗi chi tiết từ Backend trả về (nếu có)
-            alert("❌ Lỗi: " + (err.detail || JSON.stringify(err)));
-            console.log(err);
-        }
-    } catch (error) {
-        alert("Không kết nối được server!");
-        console.error(error);
+    if (res.ok) {
+        alert("Ký hợp đồng thành công!");
+        loadProperties();
+        loadContracts();
+        document.getElementById("contractForm").reset();
+    } else {
+        const err = await res.json();
+        alert("Lỗi: " + (err.detail || JSON.stringify(err)));
     }
 });
 
-// --- 5. HÀM TẠO DATA MẪU (CHO DỄ TEST) ---
+// Mock Data
 async function createMockUser() {
-    await fetch(`${API_URL}/users/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: "admin_tro", email: "chu@tro.com", password: "123", full_name: "Chủ Trọ Demo" })
-    });
-    alert("Đã gửi lệnh tạo Chủ Trọ.");
+    await fetch(`${API_URL}/users/`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: "admin", email: "chu@tro.com", password: "123", full_name: "Chủ Trọ" }) });
+    alert("Sent Admin Request");
 }
-
 async function createTenant() {
-    await fetch(`${API_URL}/users/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: "khach_demo", email: "khach@thue.com", password: "123", full_name: "Khách Demo" })
-    });
-    alert("Đã gửi lệnh tạo Khách Thuê.");
+    await fetch(`${API_URL}/users/`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: "khach", email: "khach@thue.com", password: "123", full_name: "Khách Thuê" }) });
+    alert("Sent Tenant Request");
 }
 
-// CHẠY LẦN ĐẦU KHI VÀO WEB
+// INIT
 loadProperties();
 loadContracts();
