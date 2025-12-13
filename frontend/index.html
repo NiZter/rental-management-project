@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Nhà Trọ (Demo)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container-fluid mt-4">
+        <h2 class="text-center mb-4">🏠 Hệ Thống Quản Lý Nhà Trọ - Nhóm NiZter</h2>
+        
+        <div class="row">
+            <!-- CỘT 1: QUẢN LÝ NHÀ -->
+            <div class="col-md-4">
+                <div class="card p-3 shadow-sm mb-3">
+                    <h5 class="text-primary">1. Thêm Nhà Mới</h5>
+                    <form id="propertyForm">
+                        <div class="mb-2">
+                            <input type="text" class="form-control" id="propName" required placeholder="Tên phòng (VD: P101)">
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" class="form-control" id="propAddress" required placeholder="Địa chỉ">
+                        </div>
+                        <div class="mb-2">
+                            <input type="number" class="form-control" id="propPrice" required placeholder="Giá thuê">
+                        </div>
+                        <input type="hidden" id="ownerId" value="1">
+                        <button type="submit" class="btn btn-primary w-100">Lưu Nhà</button>
+                    </form>
+                </div>
+
+                <div class="card p-3 shadow-sm">
+                    <h5 class="text-success">Công cụ Test Nhanh</h5>
+                    <button onclick="createMockUser()" class="btn btn-outline-secondary btn-sm mb-2">
+                        🛠️ Tạo Chủ Trọ (Admin)
+                    </button>
+                    <button onclick="createTenant()" class="btn btn-outline-success btn-sm">
+                        👤 Tạo Khách Thuê (Tenant)
+                    </button>
+                    <small class="text-muted d-block mt-2">*Bấm 2 nút này trước khi test</small>
+                </div>
+            </div>
+
+            <!-- CỘT 2: DANH SÁCH NHÀ -->
+            <div class="col-md-4">
+                <div class="card p-3 shadow-sm h-100">
+                    <h5>Danh Sách Phòng</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tên</th>
+                                    <th>Giá</th>
+                                    <th>TT</th>
+                                </tr>
+                            </thead>
+                            <tbody id="propertyList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CỘT 3: TẠO HỢP ĐỒNG (MỚI) -->
+            <div class="col-md-4">
+                <div class="card p-3 shadow-sm mb-3 bg-white">
+                    <h5 class="text-danger">2. Lập Hợp Đồng Thuê</h5>
+                    <form id="contractForm">
+                        <div class="mb-2">
+                            <label class="small">Chọn Nhà (Chỉ hiện nhà trống)</label>
+                            <select class="form-select" id="contractPropId" required>
+                                <option value="">-- Chọn phòng --</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="small">Email Khách Thuê</label>
+                            <input type="email" class="form-control" id="contractEmail" 
+                                   value="khach@thue.com" required placeholder="Email khách">
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-2">
+                                <label class="small">Bắt đầu</label>
+                                <input type="date" class="form-control" id="startDate" required>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <label class="small">Kết thúc</label>
+                                <input type="date" class="form-control" id="endDate" required>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <input type="number" class="form-control" id="deposit" placeholder="Tiền cọc (VNĐ)">
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100">Ký Hợp Đồng</button>
+                    </form>
+                </div>
+
+                <div class="card p-3 shadow-sm">
+                    <h5>Hợp Đồng Đang Chạy</h5>
+                    <ul id="contractList" class="list-group list-group-flush small">
+                        <!-- List hợp đồng sẽ hiện ở đây -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
