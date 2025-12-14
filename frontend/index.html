@@ -663,10 +663,10 @@
 
 <!-- MODAL THANH TOÁN -->
 <div class="modal fade" id="paymentModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-money-bill-wave"></i> Quản Lý Thanh Toán</h5>
+                <h5 class="modal-title"><i class="fas fa-file-invoice-dollar"></i> Quản Lý Hợp Đồng</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" style="padding: 28px;">
@@ -684,76 +684,141 @@
                     </div>
                 </div>
 
-                <!-- PAYMENT INFO CARD -->
-                <div class="payment-info-card">
-                    <div class="row g-0">
-                        <div class="col-4">
-                            <div class="payment-info-item">
-                                <div class="payment-info-label">Tổng HĐ</div>
-                                <div class="payment-info-value" id="totalPriceDisplay">0 đ</div>
+                <!-- TABS NAVIGATION -->
+                <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="payment-tab" data-bs-toggle="tab" data-bs-target="#payment-pane" type="button" role="tab">💰 Thanh Toán</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="damage-tab" data-bs-toggle="tab" data-bs-target="#damage-pane" type="button" role="tab" style="color: #ef4444;">🚨 Hư Hỏng & Sự Cố</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="myTabContent">
+                    <!-- TAB 1: THANH TOÁN -->
+                    <div class="tab-pane fade show active" id="payment-pane" role="tabpanel">
+                        <!-- PAYMENT INFO CARD -->
+                        <div class="payment-info-card">
+                            <div class="row g-0">
+                                <div class="col-4">
+                                    <div class="payment-info-item">
+                                        <div class="payment-info-label">Tổng HĐ</div>
+                                        <div class="payment-info-value" id="totalPriceDisplay">0 đ</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="payment-info-item">
+                                        <div class="payment-info-label">Đã Thu</div>
+                                        <div class="payment-info-value" id="paidDisplay">0 đ</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="payment-info-item">
+                                        <div class="payment-info-label">Còn Thiếu</div>
+                                        <div class="payment-info-value" id="remainingDisplay">0 đ</div>
+                                    </div>
+                                </div>
                             </div>
+                            <div class="remaining-highlight" id="paymentStatus"></div>
                         </div>
-                        <div class="col-4">
-                            <div class="payment-info-item">
-                                <div class="payment-info-label">Đã Thu</div>
-                                <div class="payment-info-value" id="paidDisplay">0 đ</div>
+
+                        <!-- FORM NỘP TIỀN -->
+                        <form id="paymentForm" class="mb-4 p-4" style="background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
+                            <div class="mb-3">
+                                <label class="form-label">Số tiền nộp (VNĐ)</label>
+                                <input type="number" class="form-control" id="payAmount" placeholder="Nhập số tiền" required>
+                                <small id="payAmountHelper" class="d-block mt-2" style="color: #6b7280;"></small>
                             </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="payment-info-item">
-                                <div class="payment-info-label">Còn Thiếu</div>
-                                <div class="payment-info-value" id="remainingDisplay">0 đ</div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label">Ngày nộp</label>
+                                    <input type="date" class="form-control" id="payDate" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Ghi chú</label>
+                                    <input type="text" class="form-control" id="payNote" placeholder="VD: Tháng 1">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-success w-100 fw-bold">
+                                <i class="fas fa-plus"></i> Thêm Thanh Toán
+                            </button>
+                        </form>
+
+                        <!-- LỊCH SỬ GIAO DỊCH -->
+                        <div>
+                            <h6 class="section-title">
+                                <i class="fas fa-history"></i> Lịch Sử Giao Dịch
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Ngày</th>
+                                            <th>Ghi chú</th>
+                                            <th class="text-end">Số tiền</th>
+                                            <th class="text-center">Hành động</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="paymentHistoryList">
+                                        <tr><td colspan="4" class="text-center text-muted py-3">Đang tải...</td></tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                    <div class="remaining-highlight" id="paymentStatus"></div>
+
+                    <!-- TAB 2: HƯ HỎNG (ADDED BY GPT) -->
+                    <div class="tab-pane fade" id="damage-pane" role="tabpanel">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Ghi nhận các sự cố, hư hỏng trong quá trình thuê để tính chi phí bồi thường.
+                        </div>
+
+                        <!-- Form báo cáo hư hỏng -->
+                        <form id="damageForm" class="mb-4 p-4" style="background: #fff5f5; border-radius: 10px; border: 1px solid #fecaca;">
+                            <h6 class="mb-3 fw-bold text-danger"><i class="fas fa-bug"></i> Báo Cáo Mới</h6>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Mô tả hư hỏng</label>
+                                <input type="text" class="form-control" id="damageDesc" required placeholder="VD: Vỡ bóng đèn, trầy xước sơn xe...">
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-4">
+                                    <label class="form-label">Mức độ</label>
+                                    <select class="form-select" id="damageSeverity">
+                                        <option value="low">🟢 Nhẹ</option>
+                                        <option value="medium" selected>🟡 Trung bình</option>
+                                        <option value="high">🔴 Nghiêm trọng</option>
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">Phí sửa (dự kiến)</label>
+                                    <input type="number" class="form-control" id="repairCost" value="0">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">Ngày báo</label>
+                                    <input type="date" class="form-control" id="damageDate" required>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger w-100 fw-bold">
+                                <i class="fas fa-save"></i> Lưu Báo Cáo
+                            </button>
+                        </form>
+
+                        <!-- Danh sách hư hỏng -->
+                        <h6 class="section-title">
+                            <i class="fas fa-list-ul"></i> Danh Sách Sự Cố
+                        </h6>
+                        <div id="damageList">
+                            <!-- JS will load data here -->
+                            <div class="text-center text-muted py-3">Chưa có báo cáo nào</div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- FORM NỘP TIỀN -->
-                <form id="paymentForm" class="mb-4 p-4" style="background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
-                    <div class="mb-3">
-                        <label class="form-label">Số tiền nộp (VNĐ)</label>
-                        <input type="number" class="form-control" id="payAmount" placeholder="Nhập số tiền" required>
-                        <small id="payAmountHelper" class="d-block mt-2" style="color: #6b7280;"></small>
-                    </div>
-
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <label class="form-label">Ngày nộp</label>
-                            <input type="date" class="form-control" id="payDate" required>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label">Ghi chú</label>
-                            <input type="text" class="form-control" id="payNote" placeholder="VD: Tháng 1">
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-success w-100 fw-bold">
-                        <i class="fas fa-plus"></i> Thêm Thanh Toán
-                    </button>
-                </form>
-
-                <!-- LỊCH SỬ GỬI DỊCH -->
-                <div>
-                    <h6 class="section-title">
-                        <i class="fas fa-history"></i> Lịch Sử Giao Dịch
-                    </h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Ngày</th>
-                                    <th>Ghi chú</th>
-                                    <th class="text-end">Số tiền</th>
-                                    <th class="text-center">Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody id="paymentHistoryList">
-                                <tr><td colspan="4" class="text-center text-muted py-3">Đang tải...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -761,5 +826,13 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="app.js"></script>
+<script>
+    // Init date inputs to today
+    document.addEventListener('DOMContentLoaded', () => {
+        const today = new Date().toISOString().split('T')[0];
+        if(document.getElementById('payDate')) document.getElementById('payDate').value = today;
+        if(document.getElementById('damageDate')) document.getElementById('damageDate').value = today;
+    });
+</script>
 </body>
 </html>
