@@ -1,9 +1,9 @@
-🏠 Rental Pro - Hệ Thống Quản Lý Cho Thuê (Full Stack)
+# 🏠 Rental Pro - Hệ Thống Quản Lý Cho Thuê (Full Stack)
 
 Rental Pro là giải pháp quản lý tài sản toàn diện: Nhà trọ, Xe cộ, Thiết bị.
 "Code sạch, Logic chặt, Giao diện mượt."
 
-🔥 Tính Năng
+# 🔥 Tính Năng
 
 Đa dạng tài sản: Không chỉ phòng trọ, quản lý được cả xe hơi, máy ảnh, lều trại... (real_estate, vehicle, item).
 
@@ -32,13 +32,11 @@ uvicorn main:app --reload
 
 👉 Server chạy tại: http://localhost:8000
 
-👉 Docs API: http://localhost:8000/docs
+👉 Docs API: http://localhost:5500
 
 4. Frontend
 
-Mở file index.html.
-
-Khuyên dùng Live Server (VS Code Extension) để tránh lỗi CORS.
+Mở ./frontend/index.html.
 
 ⚠️ Lưu ý quan trọng
 
@@ -53,7 +51,7 @@ rental-project/
 ├── models.py           # Skeleton (Database Tables)
 ├── schemas.py          # Gatekeeper (Data Validation)
 ├── database.py         # Connection
-├── reset_db.py         # Nuclear Button ☢️
+├── reset_db.py         # Nuclear Button
 ├── app.js              # Frontend Logic
 ├── index.html          # User Interface
 └── README.md           # Documentation
