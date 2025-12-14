@@ -22,15 +22,26 @@ class PropertyBase(BaseModel):
     price: float
     description: Optional[str] = None
     category: str = "real_estate"
+    image_url: Optional[str] = None
+
 class PropertyCreate(PropertyBase):
     pass
+
+class PropertyUpdate(BaseModel):
+    name: Optional[str] = None
+    address: Optional[str] = None
+    price: Optional[float] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    image_url: Optional[str] = None
+
 class PropertyResponse(PropertyBase):
     id: int
     status: str
     owner_id: int
     class Config: from_attributes = True
 
-# --- Contract (Đã Đồng Bộ) ---
+# --- Contract ---
 class ContractBase(BaseModel):
     start_date: date
     end_date: date
@@ -38,7 +49,7 @@ class ContractBase(BaseModel):
 class ContractCreate(ContractBase):
     property_id: int
     tenant_email: str
-    deposit: float  # FIX: Đã đổi tên khớp với model (trước là deposit_amount)
+    deposit: float 
     rental_type: str = "daily" 
 
 class ContractResponse(ContractBase):
@@ -47,7 +58,7 @@ class ContractResponse(ContractBase):
     tenant_id: int
     deposit: float
     total_price: float
-    status: str    # FIX: Trả về status string
+    status: str
     created_at: Optional[datetime] = None
     class Config: from_attributes = True
 

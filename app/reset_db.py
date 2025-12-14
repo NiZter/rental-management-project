@@ -1,19 +1,18 @@
 from database import engine
 import models 
 
-print("⚠️  ĐANG TIẾN HÀNH RESET DATABASE...")
+print("⚠️  CẢNH BÁO: ĐANG RESET TOÀN BỘ DATABASE!")
+print("Dữ liệu cũ sẽ bị xóa sạch. Bạn có chắc không? (Ctrl+C để hủy)")
+# import time; time.sleep(3) # Bật cái này lên nếu sợ lỡ tay
 
 try:
-    # 1. Xóa toàn bộ bảng cũ (Drop tables)
     models.Base.metadata.drop_all(bind=engine)
-    print("✅ Đã xóa sạch bảng cũ.")
+    print("✅ Đã xóa bảng cũ.")
 
-    # 2. Tạo lại bảng mới (Create tables)
     models.Base.metadata.create_all(bind=engine)
-    print("✅ Đã tạo lại bảng mới với cấu trúc chuẩn (bao gồm cột is_paid).")
+    print("✅ Đã tạo bảng mới (kèm cột image_url và password hash).")
     
-    print("🚀 Xong! Ông có thể chạy lại main.py ngay bây giờ.")
+    print("🚀 Done! Nhớ chạy lại Main App để nó tự tạo Admin User mới nhé.")
 
 except Exception as e:
-    print(f"❌ Có lỗi xảy ra: {e}")
-    print("Gợi ý: Kiểm tra lại password hoặc kết nối trong database.py")
+    print(f"❌ Lỗi: {e}")
