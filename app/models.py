@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float, Date, DateTime, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from .database import Base
+from . database import Base
 
 # --- 1. USER ---
 class User(Base):
@@ -26,12 +26,13 @@ class Property(Base):
     description = Column(Text, nullable=True)
     price = Column(Float)
     category = Column(String, default="real_estate") 
-    image_url = Column(String, nullable=True) # Link ảnh
-    status = Column(String, default="available") # available, rented, maintenance
+    image_url = Column(String, nullable=True)
+    status = Column(String, default="available")
     
     owner_id = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", back_populates="properties")
     contracts = relationship("Contract", back_populates="property")
+    damages = relationship("DamageReport", back_populates="property")
 
 # --- 3. CONTRACT ---
 class Contract(Base):
@@ -52,6 +53,7 @@ class Contract(Base):
     property = relationship("Property", back_populates="contracts")
     tenant = relationship("User", back_populates="contracts")
     payments = relationship("Payment", back_populates="contract")
+    damages = relationship("DamageReport", back_populates="contract")
 
 # --- 4. PAYMENT ---
 class Payment(Base):
@@ -64,3 +66,24 @@ class Payment(Base):
     is_paid = Column(Boolean, default=True)
     
     contract = relationship("Contract", back_populates="payments")
+
+# --- 5. DAMAGE REPORT ✅ MỚI ---
+class DamageReport(Base):
+    __tablename__ = "damage_reports"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    contract_id = Column(Integer, ForeignKey("contracts.id"))
+    property_id = Column(Integer, ForeignKey("properties.id"))
+    
+    description = Column(Text)
+    severity = Column(String, default="medium")
+    repair_cost = Column(Float, default=0)
+    status = Column(String, default="pending")
+    
+    reported_date = Column(Date)
+    repaired_date = Column(Date, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    contract = relationship("Contract", back_populates="damages")
+    property = relationship("Property", back_populates="damages")
