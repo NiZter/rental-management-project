@@ -1,97 +1,65 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, Literal
+from pydantic import BaseModel
+from typing import Optional
 from datetime import date, datetime
 
-# ==================================================
-# USER
-# ==================================================
+# --- User ---
 class UserBase(BaseModel):
-    username: str = Field(min_length=3, max_length=50)
-    email: EmailStr
-    full_name: Optional[str] = Field(default=None, max_length=100)
-
-
+    username: str
+    email: str
+    full_name: Optional[str] = None
 class UserCreate(UserBase):
-    password: str = Field(min_length=6)
-
-
+    password: str
 class UserResponse(UserBase):
     id: int
     is_active: bool
     role: str
+    class Config: from_attributes = True
 
-    class Config:
-        from_attributes = True
-
-
-# ==================================================
-# PROPERTY
-# ==================================================
+# --- Property ---
 class PropertyBase(BaseModel):
-    name: str = Field(min_length=2, max_length=100)
-    address: str = Field(min_length=5, max_length=255)
-    price: float = Field(gt=0)
-    description: Optional[str] = Field(default=None, max_length=500)
-    category: str = Field(default="real_estate", max_length=50)
-
-
+    name: str
+    address: str
+    price: float
+    description: Optional[str] = None
+    category: str = "real_estate"
 class PropertyCreate(PropertyBase):
-    owner_id: int = Field(gt=0)
-
-
+    pass
 class PropertyResponse(PropertyBase):
     id: int
     status: str
     owner_id: int
+    class Config: from_attributes = True
 
-    class Config:
-        from_attributes = True
-
-
-# ==================================================
-# CONTRACT
-# ==================================================
+# --- Contract (CẬP NHẬT) ---
 class ContractBase(BaseModel):
     start_date: date
     end_date: date
 
-
 class ContractCreate(ContractBase):
-    property_id: int = Field(gt=0)
-    tenant_email: EmailStr
-    deposit: float = Field(ge=0)
-    rental_type: Literal["daily", "monthly"] = "daily"
-
+    property_id: int
+    tenant_email: str
+    deposit_amount: float
+    # Thêm tùy chọn tính giá
+    rental_type: str = "daily" # "daily" (Ngày) hoặc "monthly" (Tháng)
 
 class ContractResponse(ContractBase):
     id: int
     property_id: int
     tenant_id: int
-    total_price: float
     deposit: float
-    status: str
-    created_at: datetime
+    total_price: float # Trả về tổng tiền
+    is_active: bool
+    created_at: Optional[datetime] = None
+    class Config: from_attributes = True
 
-    class Config:
-        from_attributes = True
-
-
-# ==================================================
-# PAYMENT
-# ==================================================
+# --- Payment ---
 class PaymentBase(BaseModel):
-    amount: float = Field(gt=0)
+    amount: float
     payment_date: date
-    note: Optional[str] = Field(default=None, max_length=255)
-
-
+    note: Optional[str] = None
 class PaymentCreate(PaymentBase):
-    contract_id: int = Field(gt=0)
-
-
+    contract_id: int
 class PaymentResponse(PaymentBase):
     id: int
-    status: str
-
-    class Config:
-        from_attributes = True
+    is_paid: bool
+    class Config: from_attributes = True

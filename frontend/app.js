@@ -1,190 +1,295 @@
 const API_URL = "http://localhost:8000";
-const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+const paymentModal = new bootstrap.Modal(
+    document.getElementById("paymentModal")
+);
 
-// --- 1. QUẢN LÝ TÀI SẢN ---
+// ==================================================
+// 1. TÀI SẢN
+// ==================================================
 async function loadProperties() {
     try {
-        const filterCat = document.getElementById("filterCategory").value;
-        let url = `${API_URL}/properties/`;
-        if (filterCat) url += `?category=${filterCat}`;
-
-        const res = await fetch(url);
+        const filterCat = document.getElementById("filterCategory")?.value || "";
+        const res = await fetch(`${API_URL}/properties/`);
         const data = await res.json();
-        
+
         const listBody = document.getElementById("propertyList");
         const selectBox = document.getElementById("contractPropId");
-        
+
         listBody.innerHTML = "";
-        selectBox.innerHTML = '<option value="" data-price="0">-- Chọn tài sản --</option>';
+        selectBox.innerHTML = `<option value="">-- Chọn tài sản --</option>`;
 
-        data.forEach(prop => {
-            let icon = prop.category === 'vehicle' ? '🚗' : (prop.category === 'item' ? '📷' : '🏠');
-            let badge = prop.status === 'available' ? '<span class="badge bg-success">Sẵn sàng</span>' : '<span class="badge bg-secondary">Đang thuê</span>';
-            
-            listBody.innerHTML += `
-                <tr>
-                    <td class="fs-5 text-center">${icon}</td>
-                    <td><strong>${prop.name}</strong><br><small class="text-muted">${prop.address}</small></td>
-                    <td class="text-primary fw-bold">${prop.price.toLocaleString()}</td>
-                    <td>${badge}</td>
-                </tr>
-            `;
+        data
+            .filter(p => !filterCat || p.category === filterCat)
+            .forEach(prop => {
+                const icon =
+                    prop.category === "vehicle" ? "🚗" :
+                    prop.category === "item" ? "📦" : "🏠";
 
-            // Lưu giá tiền vào attribute data-price để JS lấy tính toán
-            selectBox.innerHTML += `<option value="${prop.id}" data-price="${prop.price}">[${icon}] ${prop.name} - ${prop.price}</option>`;
-        });
-    } catch (e) { console.error(e); }
+                const badge = prop.status === "available"
+                    ? `<span class="badge bg-success">Sẵn sàng</span>`
+                    : `<span class="badge bg-secondary">Đang thuê</span>`;
+
+                listBody.innerHTML += `
+                    <tr>
+                        <td class="text-center fs-5">${icon}</td>
+                        <td>
+                            <strong>${prop.name}</strong><br>
+                            <small class="text-muted">${prop.address}</small>
+                        </td>
+                        <td class="fw-bold text-primary">
+                            ${prop.price.toLocaleString()}
+                        </td>
+                        <td>${badge}</td>
+                    </tr>
+                `;
+
+                if (prop.status === "available") {
+                    selectBox.innerHTML += `
+                        <option value="${prop.id}" data-price="${prop.price}">
+                            [${icon}] ${prop.name}
+                        </option>
+                    `;
+                }
+            });
+    } catch (err) {
+        console.error(err);
+    }
 }
 
-document.getElementById("propertyForm").addEventListener("submit", async (e) => {
+document.getElementById("propertyForm")?.addEventListener("submit", async e => {
     e.preventDefault();
+
     const payload = {
         name: document.getElementById("propName").value,
         address: document.getElementById("propAddress").value,
-        price: parseFloat(document.getElementById("propPrice").value),
+        price: Number(document.getElementById("propPrice").value),
         category: document.getElementById("propCategory").value,
-        description: "Mô tả mẫu"
+        description: null,
+        owner_id: 1 // admin mặc định
     };
-    await fetch(`${API_URL}/properties/?owner_id=1`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-    alert("Thêm thành công!");
+
+    const res = await fetch(`${API_URL}/properties/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+        alert("❌ Thêm tài sản thất bại");
+        return;
+    }
+
+    alert("✅ Thêm tài sản thành công");
+    e.target.reset();
     loadProperties();
-    document.getElementById("propertyForm").reset();
 });
 
-// --- 2. TÍNH TIỀN TỰ ĐỘNG (LOGIC MỚI) ---
+// ==================================================
+// 2. TÍNH TIỀN (GIỐNG BACKEND)
+// ==================================================
 function calculateTotal() {
-    // 1. Lấy giá từ dropdown
-    const selectBox = document.getElementById("contractPropId");
-    const selectedOption = selectBox.options[selectBox.selectedIndex];
-    const price = parseFloat(selectedOption.getAttribute("data-price")) || 0;
+    const propSelect = document.getElementById("contractPropId");
+    const option = propSelect.options[propSelect.selectedIndex];
+    const price = Number(option?.dataset.price || 0);
 
-    // 2. Lấy ngày
-    const startStr = document.getElementById("startDate").value;
-    const endStr = document.getElementById("endDate").value;
+    const start = document.getElementById("startDate").value;
+    const end = document.getElementById("endDate").value;
 
-    if (!startStr || !endStr || price === 0) {
+    if (!price || !start || !end) {
         document.getElementById("previewTotal").innerText = "0 đ";
         return;
     }
 
-    const startDate = new Date(startStr);
-    const endDate = new Date(endStr);
-    
-    // Tính số ngày chênh lệch
-    const diffTime = Math.abs(endDate - startDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
 
-    if (diffDays <= 0) {
+    if (days <= 0) {
         document.getElementById("previewTotal").innerText = "Lỗi ngày";
         return;
     }
 
-    // 3. Tính tiền theo loại thuê
-    let total = 0;
-    const isMonthly = document.getElementById("typeMonthly").checked;
+    const rentalType = document.querySelector(
+        'input[name="rentalType"]:checked'
+    ).value;
 
-    if (isMonthly) {
-        // Giả sử 1 tháng = 30 ngày (Logic đơn giản)
-        const months = diffDays / 30;
-        total = months * price;
+    let total = 0;
+    if (rentalType === "daily") {
+        total = days * price;
     } else {
-        total = diffDays * price;
+        const months = Math.ceil(days / 30); // giống backend
+        total = months * price;
     }
 
-    document.getElementById("previewTotal").innerText = total.toLocaleString() + " đ";
+    document.getElementById("previewTotal").innerText =
+        total.toLocaleString() + " đ";
 }
 
-// --- 3. QUẢN LÝ HỢP ĐỒNG ---
+// ==================================================
+// 3. HỢP ĐỒNG
+// ==================================================
 async function loadContracts() {
     try {
         const res = await fetch(`${API_URL}/contracts/`);
         const data = await res.json();
+
         const list = document.getElementById("contractList");
         list.innerHTML = "";
-        let totalRev = 0;
+        let totalRevenue = 0;
 
         for (const c of data) {
             const payments = await getPayments(c.id);
-            const paid = payments.reduce((sum, p) => sum + p.amount, 0);
-            totalRev += paid;
+            const paid = payments.reduce((s, p) => s + p.amount, 0);
+            totalRevenue += paid;
 
             list.innerHTML += `
-                <li class="list-group-item list-group-item-action contract-item" onclick="openPaymentModal(${c.id})">
+                <li class="list-group-item list-group-item-action"
+                    onclick="openPaymentModal(${c.id})">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <strong>HĐ #${c.id}</strong> <small>(ID Tài sản: ${c.property_id})</small><br>
-                            <small>Tổng giá trị: <span class="text-danger fw-bold">${c.total_price.toLocaleString()}đ</span></small>
+                            <strong>HĐ #${c.id}</strong><br>
+                            <small>Tổng: 
+                                <span class="text-danger fw-bold">
+                                    ${c.total_price.toLocaleString()} đ
+                                </span>
+                            </small>
                         </div>
-                        <span class="badge bg-primary rounded-pill">Đã thu: ${paid.toLocaleString()}</span>
+                        <span class="badge bg-primary">
+                            Đã thu ${paid.toLocaleString()}
+                        </span>
                     </div>
                 </li>
             `;
         }
-        document.getElementById("totalRevenue").innerText = totalRev.toLocaleString() + " đ";
-    } catch (e) {}
+
+        document.getElementById("totalRevenue").innerText =
+            totalRevenue.toLocaleString() + " đ";
+    } catch (err) {
+        console.error(err);
+    }
 }
 
-document.getElementById("contractForm").addEventListener("submit", async (e) => {
+document.getElementById("contractForm")?.addEventListener("submit", async e => {
     e.preventDefault();
-    const rentalType = document.querySelector('input[name="rentalType"]:checked').value;
-    
+
     const payload = {
-        property_id: parseInt(document.getElementById("contractPropId").value),
+        property_id: Number(document.getElementById("contractPropId").value),
         tenant_email: document.getElementById("contractEmail").value,
         start_date: document.getElementById("startDate").value,
         end_date: document.getElementById("endDate").value,
-        deposit_amount: parseFloat(document.getElementById("deposit").value) || 0,
-        rental_type: rentalType // Gửi thêm loại thuê
+        deposit: Number(document.getElementById("deposit").value) || 0,
+        rental_type: document.querySelector(
+            'input[name="rentalType"]:checked'
+        ).value
     };
 
-    const res = await fetch(`${API_URL}/contracts/`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-    
-    if (res.ok) {
-        alert("✅ Ký hợp đồng thành công!");
-        loadProperties(); loadContracts();
-        document.getElementById("contractForm").reset();
-        document.getElementById("previewTotal").innerText = "0 đ";
-    } else {
+    const res = await fetch(`${API_URL}/contracts/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
         const err = await res.json();
-        alert("❌ Lỗi: " + (err.detail || "Trùng lịch hoặc lỗi dữ liệu"));
+        alert("❌ " + (err.detail || "Lỗi tạo hợp đồng"));
+        return;
     }
+
+    alert("✅ Ký hợp đồng thành công");
+    e.target.reset();
+    document.getElementById("previewTotal").innerText = "0 đ";
+    loadProperties();
+    loadContracts();
 });
 
-// --- 4. THANH TOÁN & INIT ---
+// ==================================================
+// 4. THANH TOÁN
+// ==================================================
 async function getPayments(cid) {
-    try { const res = await fetch(`${API_URL}/contracts/${cid}/payments`); return await res.json(); } catch { return []; }
+    try {
+        const res = await fetch(`${API_URL}/contracts/${cid}/payments`);
+        return await res.json();
+    } catch {
+        return [];
+    }
 }
 
 async function openPaymentModal(cid) {
-    document.getElementById('modalContractId').innerText = cid;
-    document.getElementById('payContractId').value = cid;
-    document.getElementById('payDate').valueAsDate = new Date();
-    
+    document.getElementById("modalContractId").innerText = cid;
+    document.getElementById("payContractId").value = cid;
+    document.getElementById("payDate").valueAsDate = new Date();
+
     const payments = await getPayments(cid);
-    const history = document.getElementById('paymentHistoryList');
+    const history = document.getElementById("paymentHistoryList");
     history.innerHTML = "";
+
     payments.forEach(p => {
-        history.innerHTML += `<tr><td>${p.payment_date}</td><td>${p.note||'-'}</td><td class="text-success">+${p.amount.toLocaleString()}</td></tr>`;
+        history.innerHTML += `
+            <tr>
+                <td>${p.payment_date}</td>
+                <td>${p.note || "-"}</td>
+                <td class="text-success">
+                    +${p.amount.toLocaleString()}
+                </td>
+            </tr>
+        `;
     });
+
     paymentModal.show();
 }
 
-document.getElementById("paymentForm").addEventListener("submit", async (e) => {
+document.getElementById("paymentForm")?.addEventListener("submit", async e => {
     e.preventDefault();
-    const cid = document.getElementById("payContractId").value;
+
     const payload = {
-        contract_id: parseInt(cid),
-        amount: parseFloat(document.getElementById("payAmount").value),
+        contract_id: Number(document.getElementById("payContractId").value),
+        amount: Number(document.getElementById("payAmount").value),
         payment_date: document.getElementById("payDate").value,
         note: document.getElementById("payNote").value
     };
-    await fetch(`${API_URL}/payments/`, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload)});
-    alert("Thu tiền thành công!");
-    openPaymentModal(cid); loadContracts();
+
+    await fetch(`${API_URL}/payments/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    alert("✅ Thu tiền thành công");
+    openPaymentModal(payload.contract_id);
+    loadContracts();
 });
 
-async function createMockUser() { await fetch(`${API_URL}/users/`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username:"admin", email:"chu@tro.com", password:"123", full_name:"Admin"})}); alert("Tạo Admin OK"); }
-async function createTenant() { await fetch(`${API_URL}/users/`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username:"khach", email:"khach@thue.com", password:"123", full_name:"Khách"})}); alert("Tạo Khách OK"); }
+// ==================================================
+// 5. MOCK USER
+// ==================================================
+async function createMockAdmin() {
+    await fetch(`${API_URL}/users/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            username: "admin",
+            email: "admin@rental.com",
+            password: "123456",
+            full_name: "Admin"
+        })
+    });
+    alert("Admin đã tồn tại hoặc tạo xong");
+}
 
+async function createTenant() {
+    await fetch(`${API_URL}/users/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            username: "khach",
+            email: "khach@thue.com",
+            password: "123456",
+            full_name: "Khách thuê"
+        })
+    });
+    alert("Khách đã tồn tại hoặc tạo xong");
+}
+
+// INIT
 loadProperties();
 loadContracts();

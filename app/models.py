@@ -1,133 +1,63 @@
-from sqlalchemy import (
-    Boolean,
-    Column,
-    ForeignKey,
-    Integer,
-    String,
-    Float,
-    Date,
-    DateTime
-)
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float, Date, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-
 from .database import Base
 
-
-# ==================================================
-# USER
-# ==================================================
+# --- 1. USER ---
 class User(Base):
     __tablename__ = "users"
-
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    username = Column(String, unique=True, index=True, nullable=False)
-    full_name = Column(String, nullable=True)
-
-    hashed_password = Column(String, nullable=False)
-
+    email = Column(String, unique=True, index=True)
+    username = Column(String, unique=True, index=True)
+    full_name = Column(String)
+    hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
-    role = Column(String, default="user")  # user | admin
+    role = Column(String, default="user") 
+    properties = relationship("Property", back_populates="owner")
+    contracts = relationship("Contract", back_populates="tenant")
 
-    # one user -> many properties
-    properties = relationship(
-        "Property",
-        back_populates="owner",
-        cascade="all, delete-orphan"
-    )
-
-    # one user -> many contracts (as tenant)
-    contracts = relationship(
-        "Contract",
-        back_populates="tenant",
-        cascade="all, delete-orphan"
-    )
-
-
-# ==================================================
-# PROPERTY
-# ==================================================
+# --- 2. PROPERTY ---
 class Property(Base):
     __tablename__ = "properties"
-
     id = Column(Integer, primary_key=True, index=True)
-
-    name = Column(String, index=True, nullable=False)
-    address = Column(String, nullable=False)
+    name = Column(String, index=True)
+    address = Column(String)
     description = Column(String, nullable=True)
-
-    price = Column(Float, nullable=False)
-    category = Column(String, default="real_estate")
-
-    # available | rented
-    status = Column(String, default="available")
-
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    price = Column(Float) # Giá gốc (theo ngày hoặc tháng tùy quy ước)
+    category = Column(String, default="real_estate") 
+    status = Column(String, default="available") 
+    owner_id = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", back_populates="properties")
+    contracts = relationship("Contract", back_populates="property")
 
-    # one property -> many contracts
-    contracts = relationship(
-        "Contract",
-        back_populates="property",
-        cascade="all, delete-orphan"
-    )
-
-
-# ==================================================
-# CONTRACT
-# ==================================================
+# --- 3. CONTRACT (CẬP NHẬT) ---
 class Contract(Base):
     __tablename__ = "contracts"
-
     id = Column(Integer, primary_key=True, index=True)
-
-    property_id = Column(Integer, ForeignKey("properties.id"), nullable=False)
-    tenant_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=False)
-
-    total_price = Column(Float, default=0)
+    property_id = Column(Integer, ForeignKey("properties.id"))
+    tenant_id = Column(Integer, ForeignKey("users.id"))
+    
+    start_date = Column(Date)
+    end_date = Column(Date)
+    
+    # Cột mới: Tổng giá trị hợp đồng (Tự động tính)
+    total_price = Column(Float, default=0) 
     deposit = Column(Float, default=0)
-
-    # active | ended | cancelled
-    status = Column(String, default="active")
-
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now()
-    )
+    
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     property = relationship("Property", back_populates="contracts")
     tenant = relationship("User", back_populates="contracts")
+    payments = relationship("Payment", back_populates="contract")
 
-    payments = relationship(
-        "Payment",
-        back_populates="contract",
-        cascade="all, delete-orphan"
-    )
-
-
-# ==================================================
-# PAYMENT
-# ==================================================
+# --- 4. PAYMENT ---
 class Payment(Base):
     __tablename__ = "payments"
-
     id = Column(Integer, primary_key=True, index=True)
-
-    contract_id = Column(
-        Integer,
-        ForeignKey("contracts.id"),
-        nullable=False
-    )
-
-    amount = Column(Float, nullable=False)
-    payment_date = Column(Date, nullable=False)
+    contract_id = Column(Integer, ForeignKey("contracts.id"))
+    amount = Column(Float)
+    payment_date = Column(Date)
     note = Column(String, nullable=True)
-
-    # paid | pending
-    status = Column(String, default="paid")
-
+    is_paid = Column(Boolean, default=True)
     contract = relationship("Contract", back_populates="payments")
