@@ -24,11 +24,13 @@ Tính chi phí sửa chữa & trừ tiền cọc/bồi thường trực tiếp.
 Tài chính minh bạch: Theo dõi tiền cọc, đã thu, còn nợ real-time.
 
 
+# 👉 Server chạy tại:
 ```
-# 👉 Server chạy tại: http://localhost:8000
+http://localhost:8000
 ```
+# 👉 Docs API:
 ```
-👉 Docs API: http://localhost:5500
+http://localhost:5500
 ```
 
 # ⚠️ Lưu ý quan trọng
