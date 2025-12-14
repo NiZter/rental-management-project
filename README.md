@@ -38,11 +38,11 @@ User Admin mặc định: Hệ thống tự tạo khi có giao dịch đầu ti�
 # 📂 Cấu trúc dự án
 
 rental-project/
-├── main.py             # Brain (API Logic)
-├── models.py           # Skeleton (Database Tables)
-├── schemas.py          # Gatekeeper (Data Validation)
-├── database.py         # Connection
-├── reset_db.py         # Nuclear Button
-├── app.js              # Frontend Logic
-├── index.html          # User Interface
-└── README.md           # Documentation
+├── main.py # Brain (API Logic)
+├── models.py # Skeleton (Database Tables)
+├── schemas.py # Gatekeeper (Data Validation)
+├── database.py # Connection
+├── reset_db.py # Nuclear Button
+├── app.js # Frontend Logic
+├── index.html # User Interface
+└── README.md # Documentation
