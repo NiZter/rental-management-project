@@ -44,7 +44,7 @@ http://localhost:8000
 http://localhost:5500
 ```
 
-===
+---
 ## 📥 Clone project về máy
 ### 1. Clone source code từ GitHub
 ```
@@ -52,30 +52,45 @@ git clone https://github.com/NiZter/rental-management-project.git
 ```
 
 ### 2. Di chuyển vào thư mục project
-```cd rental-management-project```
+```
+cd rental-management-project
+```
 
 ### 3. Tạo môi trường ảo
-```python -m venv venv```
+```
+python -m venv venv
+```
 
 ### 4. Kích hoạt môi trường ảo
 #### Windows
-```venv\Scripts\activate```
+```
+venv\Scripts\activate
+```
 
 #### Linux / macOS
-```source venv/bin/activate
+```
+source venv/bin/activate
 ```
 
 ### 5. Cài đặt thư viện cần thiết
-```pip install -r requirements.txt```
+```
+pip install -r requirements.txt
+```
 
 ### 6. Tạo file môi trường
-```cp .env.example .env```
+```
+cp .env.example .env
+```
 
 #### Sau đó chỉnh trong .env:
-```DATABASE_URL=postgresql://username:password@localhost:5432/rental_db```
+```
+DATABASE_URL=postgresql://username:password@localhost:5432/rental_db
+```
 
 ### 7. Chạy FastAPI server
-```uvicorn app.main:app --reload```
+```
+uvicorn app.main:app --reload
+```
 
 ---
 ## ⚠️ Lưu ý quan trọng
