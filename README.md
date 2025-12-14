@@ -1,38 +1,85 @@
-🏠 HỆ THỐNG QUẢN LÝ CHO THUÊ BẤT ĐỘNG SẢN (ADMIN RENTAL API)
+🏠 Rental Pro - Hệ Thống Quản Lý Cho Thuê (Full Stack)
 
-        Đây là dịch vụ Backend API được xây dựng bằng FastAPI, SQLAlchemy và PostgreSQL, dùng để quản lý các nghiệp vụ cho thuê tài sản như bất động sản, xe cộ, hoặc thiết bị.
+Rental Pro là giải pháp quản lý tài sản toàn diện: Nhà trọ, Xe cộ, Thiết bị.
+"Code sạch, Logic chặt, Giao diện mượt."
 
-✨ Tính năng nổi bật
+🔥 Tính Năng "Ăn Tiền"
 
-        Quản lý Tài sản (Property): Thêm, xóa, tìm kiếm tài sản theo giá, danh mục, và từ khóa.
+Đa dạng tài sản: Không chỉ phòng trọ, quản lý được cả xe hơi, máy ảnh, lều trại... (real_estate, vehicle, item).
 
-        Quản lý Hợp đồng (Contract):
+Hợp đồng thông minh:
 
-                Tạo hợp đồng với cơ chế tính tổng giá động (theo ngày hoặc tháng).
-                
-                Tự động kiểm tra trùng lịch (overlap) thuê.
-                
-                Tự động tạo tài khoản khách thuê (Tenant) nếu chưa có, chỉ cần email.
-                
-                Tự động cập nhật trạng thái tài sản khi hợp đồng đang hiệu lực.
+Tự động tính tiền theo ngày/tháng.
 
-        Quản lý Thanh toán (Payment): Ghi nhận các giao dịch thanh toán, bao gồm tiền cọc.
+Chặn trùng lịch (Conflict Detection): Không bao giờ lo cho thuê trùng ngày.
 
-        API Báo cáo Hư hỏng (Damage Report): Tính năng mới cho phép theo dõi, cập nhật chi phí và đánh dấu đã sửa chữa đối với các hư hỏng phát sinh.
+Xuất PDF: In hợp đồng chuyên nghiệp chỉ với 1 click.
 
-        Xuất Hợp đồng (HTML/PDF): Endpoint đặc biệt giúp tải về hợp đồng dưới dạng file HTML có thể in (print to PDF) trực tiếp từ trình duyệt.
+Theo dõi hư hỏng (Damage Tracking):
 
-        Cơ chế người dùng: Tự động tạo tài khoản Admin cho Chủ sở hữu.
+Ghi nhận hư hỏng kèm mức độ (🔴 Nặng, 🟡 Vừa, 🟢 Nhẹ).
 
-🛠️ Công nghệ sử dụng
+Tính chi phí sửa chữa & trừ tiền cọc/bồi thường trực tiếp.
 
-        Backend Framework: Python (FastAPI)
+Tài chính minh bạch: Theo dõi tiền cọc, đã thu, còn nợ real-time.
 
-        Cơ sở dữ liệu: PostgreSQL
+🛠️ Cài Đặt (Localhost)
 
-        ORM: SQLAlchemy
+1. Database (PostgreSQL)
 
-        Validation: Pydantic
+Tạo database mới trong pgAdmin hoặc Terminal:
 
-        Cấu hình: python-dotenv
+CREATE DATABASE rental_db;
 
+
+2. Cấu hình (.env)
+
+Tạo file .env (copy từ code bên dưới, không commit file này):
+
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_NAME=rental_db
+
+
+3. Backend (FastAPI)
+
+# Tạo môi trường ảo (Optional)
+python -m venv venv
+# Windows: venv\Scripts\activate | Mac/Linux: source venv/bin/activate
+
+# Cài thư viện
+pip install fastapi uvicorn sqlalchemy psycopg2-binary python-dotenv pydantic
+
+# Chạy Server
+uvicorn main:app --reload
+
+
+👉 Server chạy tại: http://localhost:8000
+
+👉 Docs API: http://localhost:8000/docs
+
+4. Frontend
+
+Mở file index.html.
+
+Khuyên dùng Live Server (VS Code Extension) để tránh lỗi CORS.
+
+⚠️ Lưu ý quan trọng
+
+File reset_db.py: Chạy file này (python reset_db.py) sẽ XÓA TRẮNG database và tạo lại bảng. Chỉ dùng khi mới setup hoặc muốn reset dữ liệu.
+
+User Admin mặc định: Hệ thống tự tạo khi có giao dịch đầu tiên (Logic Lazy Load).
+
+📂 Cấu trúc dự án
+
+rental-project/
+├── main.py             # Brain (API Logic)
+├── models.py           # Skeleton (Database Tables)
+├── schemas.py          # Gatekeeper (Data Validation)
+├── database.py         # Connection
+├── reset_db.py         # Nuclear Button ☢️
+├── app.js              # Frontend Logic
+├── index.html          # User Interface
+└── README.md           # Documentation
