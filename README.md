@@ -35,7 +35,9 @@ File reset_db.py: Chạy file này (python reset_db.py) sẽ XÓA TRẮNG databa
 
 User Admin mặc định: Hệ thống tự tạo khi có giao dịch đầu tiên (Logic Lazy Load).
 
-# 📂 Cấu trúc dự án
+## 📂 Cấu trúc dự án
+
+```text
 rental-project/
 ├── app/                    # Backend (API)
 │   ├── main.py             # Brain (API Logic)
@@ -48,5 +50,6 @@ rental-project/
 │   ├── app.js              # Frontend Logic
 │   └── index.html          # User Interface
 │
+├── .env
+├── .gitignore
 └── README.md               # Documentation
-
