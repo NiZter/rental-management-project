@@ -3,11 +3,18 @@
 Rental Pro là giải pháp quản lý tài sản toàn diện: Nhà trọ, Xe cộ, Thiết bị.
 "Code sạch, Logic chặt, Giao diện mượt."
 
-## 🔥 Tính Năng
+## 🚀 Live Demo
+```text
+https://rental-management-project.vercel.app/
+```
 
-Đa dạng tài sản: Không chỉ phòng trọ, quản lý được cả xe hơi, máy ảnh, lều trại... (real_estate, vehicle, item).
+## 🔥 Tính Năng Nổi Bật
 
-Hợp đồng thông minh:
+###1. Đa dạng tài sản
+
+Không chỉ phòng trọ, quản lý được cả xe hơi, máy ảnh, lều trại... (real_estate, vehicle, item).
+
+###2. Hợp đồng thông minh
 
 Tự động tính tiền theo ngày/tháng.
 
@@ -15,21 +22,23 @@ Chặn trùng lịch (Conflict Detection): Không bao giờ lo cho thuê trùng 
 
 Xuất PDF: In hợp đồng chuyên nghiệp chỉ với 1 click.
 
-Theo dõi hư hỏng (Damage Tracking):
+###3. Theo dõi hư hỏng (Damage Tracking)
 
 Ghi nhận hư hỏng kèm mức độ (🔴 Nặng, 🟡 Vừa, 🟢 Nhẹ).
 
 Tính chi phí sửa chữa & trừ tiền cọc/bồi thường trực tiếp.
 
-Tài chính minh bạch: Theo dõi tiền cọc, đã thu, còn nợ real-time.
+###4. Tài chính minh bạch
+
+Theo dõi tiền cọc, đã thu, còn nợ real-time.
 
 
-### 👉 Server chạy tại:
+### 👉 Server (Backend):
 ```text
 http://localhost:8000
 ```
 
-### 👉 Docs API:
+### 👉 Live Server (Frontend):
 ```text
 http://localhost:5500
 ```
