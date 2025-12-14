@@ -47,8 +47,6 @@ http://localhost:5500
 
 File reset_db.py: Chạy file này (python reset_db.py) sẽ XÓA TRẮNG database và tạo lại bảng. Chỉ dùng khi mới setup hoặc muốn reset dữ liệu.
 
-User Admin mặc định: Hệ thống tự tạo khi có giao dịch đầu tiên (Logic Lazy Load).
-
 ## 📂 Cấu trúc dự án
 
 ```
