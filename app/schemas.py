@@ -30,7 +30,7 @@ class PropertyResponse(PropertyBase):
     owner_id: int
     class Config: from_attributes = True
 
-# --- Contract (CẬP NHẬT) ---
+# --- Contract (Đã Đồng Bộ) ---
 class ContractBase(BaseModel):
     start_date: date
     end_date: date
@@ -38,17 +38,16 @@ class ContractBase(BaseModel):
 class ContractCreate(ContractBase):
     property_id: int
     tenant_email: str
-    deposit_amount: float
-    # Thêm tùy chọn tính giá
-    rental_type: str = "daily" # "daily" (Ngày) hoặc "monthly" (Tháng)
+    deposit: float  # FIX: Đã đổi tên khớp với model (trước là deposit_amount)
+    rental_type: str = "daily" 
 
 class ContractResponse(ContractBase):
     id: int
     property_id: int
     tenant_id: int
     deposit: float
-    total_price: float # Trả về tổng tiền
-    is_active: bool
+    total_price: float
+    status: str    # FIX: Trả về status string
     created_at: Optional[datetime] = None
     class Config: from_attributes = True
 

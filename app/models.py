@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float, Date, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from .database import Base
+from database import Base
 
 # --- 1. USER ---
 class User(Base):
@@ -23,14 +23,14 @@ class Property(Base):
     name = Column(String, index=True)
     address = Column(String)
     description = Column(String, nullable=True)
-    price = Column(Float) # Giá gốc (theo ngày hoặc tháng tùy quy ước)
+    price = Column(Float) # Giá gốc
     category = Column(String, default="real_estate") 
-    status = Column(String, default="available") 
+    status = Column(String, default="available") # available, rented, maintenance
     owner_id = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", back_populates="properties")
     contracts = relationship("Contract", back_populates="property")
 
-# --- 3. CONTRACT (CẬP NHẬT) ---
+# --- 3. CONTRACT (Đã Nâng Cấp) ---
 class Contract(Base):
     __tablename__ = "contracts"
     id = Column(Integer, primary_key=True, index=True)
@@ -40,11 +40,12 @@ class Contract(Base):
     start_date = Column(Date)
     end_date = Column(Date)
     
-    # Cột mới: Tổng giá trị hợp đồng (Tự động tính)
     total_price = Column(Float, default=0) 
     deposit = Column(Float, default=0)
     
-    is_active = Column(Boolean, default=True)
+    # FIX: Dùng status string thay vì boolean để quản lý trạng thái phức tạp hơn
+    status = Column(String, default="active") # active, completed, cancelled
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     property = relationship("Property", back_populates="contracts")
