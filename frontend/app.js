@@ -1,4 +1,10 @@
-const API_URL = "http://localhost:8000";
+// ⚠️ QUAN TRỌNG: Khi deploy xong Backend trên Render, copy link đó dán vào đây
+// Ví dụ: const API_URL = "https://rental-pro-backend.onrender.com";
+
+// Hiện tại đang để localhost để test, khi nào có link Render thì đổi dòng dưới:
+const API_URL = "http://localhost:8000"; 
+// const API_URL = "LINK_RENDER_CUA_BAN_O_DAY"; 
+
 let paymentModal;
 
 // Format tiền VNĐ
@@ -14,8 +20,11 @@ function showToast(message, type = 'success') {
             <span>${message}</span>
         </div>
     `;
-    document.getElementById('toastContainer').appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
+    const container = document.getElementById('toastContainer');
+    if (container) {
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+    }
 }
 
 // ============================================================
@@ -27,19 +36,23 @@ async function loadProperties() {
         const res = await fetch(`${API_URL}/properties/`);
         
         if (!res.ok) {
-            showToast("Lỗi kết nối Backend", "error");
+            // Không show lỗi ầm ĩ lúc mới load trang nếu chưa kết nối được
+            console.warn("Chưa kết nối được Backend hoặc lỗi mạng");
             return;
         }
 
         const data = await res.json();
         const listBody = document.getElementById("propertyList");
         const selectBox = document.getElementById("contractPropId");
+        
+        if(!listBody || !selectBox) return;
+
         let propertyCount = 0;
         
         listBody.innerHTML = "";
         selectBox.innerHTML = `<option value="">-- Chọn tài sản --</option>`;
 
-        const filteredData = Array.isArray(data) ? data. filter(p => ! filterCat || p.category === filterCat) : [];
+        const filteredData = Array.isArray(data) ? data.filter(p => !filterCat || p.category === filterCat) : [];
         propertyCount = filteredData.length;
         
         if (filteredData.length === 0) {
@@ -48,7 +61,7 @@ async function loadProperties() {
             filteredData.forEach(prop => {
                 let imgHtml = '';
                 if (prop.image_url) {
-                    imgHtml = `<img src="${prop.image_url}" class="property-img" onerror="this.src='https://via.placeholder.com/60? text=Error'">`;
+                    imgHtml = `<img src="${prop.image_url}" class="property-img" onerror="this.src='https://via.placeholder.com/60?text=Error'">`;
                 } else {
                     const icon = prop.category === "vehicle" ? "🚗" :  prop.category === "item" ? "📦" : "🏠";
                     imgHtml = `<div class="icon-lg">${icon}</div>`;
@@ -77,7 +90,7 @@ async function loadProperties() {
 
                 if (prop.status === "available") {
                     selectBox.innerHTML += `
-                        <option value="${prop. id}" data-price="${prop.price}">
+                        <option value="${prop.id}" data-price="${prop.price}">
                             ${prop.name} - ${fmtMoney(prop.price)}/ngày
                         </option>
                     `;
@@ -85,11 +98,12 @@ async function loadProperties() {
             });
         }
 
-        document.getElementById("totalProperties").innerText = propertyCount;
+        const countEl = document.getElementById("totalProperties");
+        if(countEl) countEl.innerText = propertyCount;
 
     } catch (err) {
         console.error(err);
-        showToast("Lỗi tải dữ liệu", "error");
+        showToast("Lỗi tải dữ liệu (Kiểm tra Backend)", "error");
     }
 }
 
@@ -100,7 +114,7 @@ document.getElementById("propertyForm")?.addEventListener("submit", async e => {
         name: document.getElementById("propName").value,
         address: document.getElementById("propAddress").value,
         price: Number(document.getElementById("propPrice").value),
-        category: document. getElementById("propCategory").value,
+        category: document.getElementById("propCategory").value,
         image_url: document.getElementById("propImage").value || null
     };
 
@@ -148,7 +162,7 @@ async function deleteProperty(id) {
 // ============================================================
 function calculateTotal() {
     const propSelect = document.getElementById("contractPropId");
-    const option = propSelect?. options[propSelect.selectedIndex];
+    const option = propSelect?.options[propSelect.selectedIndex];
     const price = Number(option?.dataset.price || 0);
 
     const start = document.getElementById("startDate")?.value;
@@ -192,13 +206,13 @@ async function loadContracts() {
 
         const data = await res.json();
         const list = document.getElementById("contractList");
-        if (! list) return;
+        if (!list) return;
 
         list.innerHTML = "";
         let totalRevenue = 0;
         let contractCount = 0;
 
-        if (! Array.isArray(data) || data.length === 0) {
+        if (!Array.isArray(data) || data.length === 0) {
             list.innerHTML = `<div class="text-center text-muted py-4">📋 Chưa có hợp đồng nào</div>`;
         } else {
             for (const c of data) {
@@ -240,7 +254,7 @@ async function loadContracts() {
                         <div class="progress">
                             <div class="progress-bar" style="background-color: ${progressColor}; width: ${percent}%"></div>
                         </div>
-                        <div style="display: flex; gap: 6px;">
+                        <div style="display: flex; gap: 6px; margin-top: 10px;">
                             <button class="btn btn-primary w-100 btn-sm" onclick="openPaymentModal(${c.id}, '${c.status || 'active'}'); event.stopPropagation();">
                                 <i class="fas fa-plus"></i> Nộp tiền
                             </button>
@@ -253,8 +267,10 @@ async function loadContracts() {
             }
         }
 
-        document. getElementById("totalContracts").innerText = contractCount;
-        document.getElementById("totalRevenue").innerText = fmtMoney(totalRevenue);
+        const countEl = document.getElementById("totalContracts");
+        const revEl = document.getElementById("totalRevenue");
+        if(countEl) countEl.innerText = contractCount;
+        if(revEl) revEl.innerText = fmtMoney(totalRevenue);
 
     } catch (err) {
         console.error(err);
@@ -289,7 +305,8 @@ document.getElementById("contractForm")?.addEventListener("submit", async e => {
         if (res.ok) {
             showToast("✅ Ký hợp đồng thành công!");
             e.target.reset();
-            document.getElementById("previewTotal").innerText = "0 đ";
+            const prevTotal = document.getElementById("previewTotal");
+            if(prevTotal) prevTotal.innerText = "0 đ";
             loadProperties();
             loadContracts();
         } else {
@@ -301,23 +318,6 @@ document.getElementById("contractForm")?.addEventListener("submit", async e => {
         showToast("❌ Lỗi kết nối", "error");
     }
 });
-
-// Xóa Hợp Đồng
-async function deleteContract(id, event) {
-    if (event) event.preventDefault();
-    if (!confirm("Hủy hợp đồng này?")) return;
-    
-    try {
-        const res = await fetch(`${API_URL}/contracts/${id}`, { method: "DELETE" });
-        if (res.ok) {
-            showToast("✅ Đã hủy hợp đồng");
-            loadContracts();
-            loadProperties();
-        }
-    } catch (err) {
-        console.error(err);
-    }
-}
 
 // ============================================================
 // 4. THANH TOÁN
@@ -365,7 +365,7 @@ async function openPaymentModal(cid, status) {
             const payments = await res.json();
             if (tbody) {
                 tbody.innerHTML = "";
-                if (! Array.isArray(payments) || payments.length === 0) {
+                if (!Array.isArray(payments) || payments.length === 0) {
                     tbody.innerHTML = "<tr><td colspan='4' class='text-center text-muted py-3'>Chưa có giao dịch</td></tr>";
                 } else {
                     paid = payments.reduce((s, p) => s + p.amount, 0);
@@ -377,9 +377,6 @@ async function openPaymentModal(cid, status) {
                                 <td><small>${p.note || '-'}</small></td>
                                 <td class="text-end"><small style="color: #10b981; font-weight: 600;">+${fmtMoney(p.amount)}</small></td>
                                 <td class="text-center">
-                                    <button class="btn btn-sm btn-warning" onclick="editPayment(${p.id}, ${cid})" title="Sửa">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
                                     <button class="btn btn-sm btn-danger" onclick="deletePayment(${p.id}, ${cid})" title="Xóa">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -404,11 +401,11 @@ async function openPaymentModal(cid, status) {
     if (remaining === 0) {
         statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Đã thanh toán đủ! ';
         statusMsg.style.background = '#d1fae5';
-        statusMsg. style.color = '#065f46';
+        statusMsg.style.color = '#065f46';
     } else {
         statusMsg.innerHTML = `<i class="fas fa-exclamation-circle"></i> 💡 Còn thiếu <strong>${fmtMoney(remaining)}</strong>`;
         statusMsg.style.background = '#fef08a';
-        statusMsg.style. color = '#854d0e';
+        statusMsg.style.color = '#854d0e';
     }
 
     const payAmountInput = document.getElementById('payAmount');
@@ -441,14 +438,14 @@ document.getElementById("paymentForm")?.addEventListener("submit", async e => {
         contract_id: Number(cid),
         amount: Number(document.getElementById("payAmount").value),
         payment_date: document.getElementById("payDate").value,
-        note: document. getElementById("payNote").value
+        note: document.getElementById("payNote").value
     };
 
     try {
         const res = await fetch(`${API_URL}/payments/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON. stringify(payload)
+            body: JSON.stringify(payload)
         });
         
         if (res.ok) {
@@ -484,39 +481,6 @@ async function deletePayment(paymentId, contractId) {
     }
 }
 
-// Sửa Thanh Toán
-async function editPayment(paymentId, contractId) {
-    const newAmount = prompt("Nhập số tiền mới:");
-    if (! newAmount || isNaN(newAmount)) {
-        showToast("Số tiền không hợp lệ", "error");
-        return;
-    }
-    
-    try {
-        const res = await fetch(`${API_URL}/payments/${paymentId}`, { 
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                contract_id: contractId,
-                amount: Number(newAmount),
-                payment_date: new Date().toISOString().split('T')[0],
-                note: "Sửa lại thanh toán"
-            })
-        });
-        
-        if (res.ok) {
-            showToast("✅ Đã cập nhật thanh toán");
-            openPaymentModal(contractId);
-            loadContracts();
-        } else {
-            showToast("❌ Lỗi cập nhật", "error");
-        }
-    } catch (err) {
-        console.error(err);
-        showToast("❌ Lỗi", "error");
-    }
-}
-
 // ============================================================
 // 5. DAMAGE TRACKING
 // ============================================================
@@ -527,6 +491,8 @@ async function loadDamages(contractId) {
 
         const damages = await res.json();
         const list = document.getElementById('damageList');
+        if(!list) return;
+
         list.innerHTML = '';
 
         if (damages.length === 0) {
@@ -541,11 +507,11 @@ async function loadDamages(contractId) {
             const statusColor = d.status === 'pending' ? '#f59e0b' : d.status === 'repaired' ? '#10b981' : '#6b7280';
 
             list.innerHTML += `
-                <div style="background:  white; border-left: 4px solid ${statusColor}; padding: 12px; margin-bottom: 10px; border-radius: 6px;">
+                <div style="background: white; border-left: 4px solid ${statusColor}; padding: 12px; margin-bottom: 10px; border-radius: 6px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <strong>${severityIcon} ${d.description}</strong>
-                        <span style="background: ${statusColor}; color:  white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold;">
-                            ${d.status. toUpperCase()}
+                        <span style="background: ${statusColor}; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold;">
+                            ${d.status.toUpperCase()}
                         </span>
                     </div>
                     <div style="display: flex; justify-content: space-between; font-size: 12px; color: #6b7280; margin-bottom: 10px;">
@@ -579,7 +545,7 @@ async function loadDamages(contractId) {
 }
 
 // Submit báo cáo hư hỏng
-document. getElementById('damageForm')?.addEventListener('submit', async e => {
+document.getElementById('damageForm')?.addEventListener('submit', async e => {
     e.preventDefault();
     const cid = document.getElementById('payContractId').value;
     
@@ -588,7 +554,7 @@ document. getElementById('damageForm')?.addEventListener('submit', async e => {
         const res = await fetch(`${API_URL}/contracts/`);
         const contracts = await res.json();
         const contract = contracts.find(c => c.id === parseInt(cid));
-        propertyId = contract?. property_id || 0;
+        propertyId = contract?.property_id || 0;
     } catch (err) {
         console.error(err);
     }
