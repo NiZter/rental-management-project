@@ -1,9 +1,9 @@
-### Rental Pro - Hệ Thống Quản Lý Cho Thuê
+# Rental Pro - Hệ Thống Quản Lý Cho Thuê
 
 Rental Pro là giải pháp quản lý tài sản toàn diện: Nhà trọ, Xe cộ, Thiết bị.
 "Code sạch, Logic chặt, Giao diện mượt."
 
-# 🔥 Tính Năng
+## 🔥 Tính Năng
 
 Đa dạng tài sản: Không chỉ phòng trọ, quản lý được cả xe hơi, máy ảnh, lều trại... (real_estate, vehicle, item).
 
@@ -24,17 +24,17 @@ Tính chi phí sửa chữa & trừ tiền cọc/bồi thường trực tiếp.
 Tài chính minh bạch: Theo dõi tiền cọc, đã thu, còn nợ real-time.
 
 
-# 👉 Server chạy tại:
+### 👉 Server chạy tại:
 ```text
 http://localhost:8000
 ```
 
-# 👉 Docs API:
+### 👉 Docs API:
 ```text
 http://localhost:5500
 ```
 
-# ⚠️ Lưu ý quan trọng
+## ⚠️ Lưu ý quan trọng
 
 File reset_db.py: Chạy file này (python reset_db.py) sẽ XÓA TRẮNG database và tạo lại bảng. Chỉ dùng khi mới setup hoặc muốn reset dữ liệu.
 
