@@ -36,13 +36,17 @@ File reset_db.py: Chạy file này (python reset_db.py) sẽ XÓA TRẮNG databa
 User Admin mặc định: Hệ thống tự tạo khi có giao dịch đầu tiên (Logic Lazy Load).
 
 # 📂 Cấu trúc dự án
-
 rental-project/
-├── main.py # Brain (API Logic)
-├── models.py # Skeleton (Database Tables)
-├── schemas.py # Gatekeeper (Data Validation)
-├── database.py # Connection
-├── reset_db.py # Nuclear Button
-├── app.js # Frontend Logic
-├── index.html # User Interface
-└── README.md # Documentation
+├── app/                    # Backend (API)
+│   ├── main.py             # Brain (API Logic)
+│   ├── models.py           # Skeleton (Database Tables)
+│   ├── schemas.py          # Gatekeeper (Data Validation)
+│   ├── database.py         # Database Connection
+│   └── reset_db.py         # Nuclear Button
+│
+├── frontend/               # Frontend
+│   ├── app.js              # Frontend Logic
+│   └── index.html          # User Interface
+│
+└── README.md               # Documentation
+
