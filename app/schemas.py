@@ -1,84 +1,97 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional, Literal
 from datetime import date, datetime
 
-# =======================
-# 1. USER SCHEMAS
-# =======================
+# ==================================================
+# USER
+# ==================================================
 class UserBase(BaseModel):
-    username: str
-    email: str
-    full_name: Optional[str] = None
+    username: str = Field(min_length=3, max_length=50)
+    email: EmailStr
+    full_name: Optional[str] = Field(default=None, max_length=100)
+
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(min_length=6)
+
 
 class UserResponse(UserBase):
     id: int
     is_active: bool
     role: str
+
     class Config:
         from_attributes = True
 
-# =======================
-# 2. PROPERTY SCHEMAS (TÀI SẢN)
-# =======================
+
+# ==================================================
+# PROPERTY
+# ==================================================
 class PropertyBase(BaseModel):
-    name: str
-    address: str
-    price: float
-    description: Optional[str] = None
-    # Thêm category để phân loại (real_estate, vehicle, item)
-    category: str = "real_estate"
+    name: str = Field(min_length=2, max_length=100)
+    address: str = Field(min_length=5, max_length=255)
+    price: float = Field(gt=0)
+    description: Optional[str] = Field(default=None, max_length=500)
+    category: str = Field(default="real_estate", max_length=50)
+
 
 class PropertyCreate(PropertyBase):
-    pass
+    owner_id: int = Field(gt=0)
+
 
 class PropertyResponse(PropertyBase):
     id: int
     status: str
     owner_id: int
+
     class Config:
         from_attributes = True
 
-# =======================
-# 3. CONTRACT SCHEMAS (HỢP ĐỒNG)
-# =======================
+
+# ==================================================
+# CONTRACT
+# ==================================================
 class ContractBase(BaseModel):
     start_date: date
     end_date: date
 
-# Schema dùng cho Input (Dữ liệu từ Frontend gửi lên)
-class ContractCreate(ContractBase):
-    property_id: int
-    tenant_email: str       # Dùng email để tìm user
-    deposit_amount: float   # Tên biến khớp với frontend
 
-# Schema dùng cho Output (Dữ liệu trả về từ Database)
+class ContractCreate(ContractBase):
+    property_id: int = Field(gt=0)
+    tenant_email: EmailStr
+    deposit: float = Field(ge=0)
+    rental_type: Literal["daily", "monthly"] = "daily"
+
+
 class ContractResponse(ContractBase):
     id: int
     property_id: int
     tenant_id: int
-    deposit: float          # Tên cột trong DB là deposit
-    is_active: bool
-    created_at: Optional[datetime] = None
-    
+    total_price: float
+    deposit: float
+    status: str
+    created_at: datetime
+
     class Config:
         from_attributes = True
 
-# =======================
-# 4. PAYMENT SCHEMAS (THANH TOÁN)
-# =======================
+
+# ==================================================
+# PAYMENT
+# ==================================================
 class PaymentBase(BaseModel):
-    amount: float
+    amount: float = Field(gt=0)
     payment_date: date
-    note: Optional[str] = None
+    note: Optional[str] = Field(default=None, max_length=255)
+
 
 class PaymentCreate(PaymentBase):
-    contract_id: int
+    contract_id: int = Field(gt=0)
+
 
 class PaymentResponse(PaymentBase):
     id: int
-    is_paid: bool
+    status: str
+
     class Config:
         from_attributes = True

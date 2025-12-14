@@ -1,57 +1,38 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from sqlalchemy import and_
 from datetime import date
+from typing import List
 
-# Import các module cùng thư mục
-from . import models, schemas, database
+from .database import get_db, engine
+from . import models, schemas
 
-app = FastAPI(title="Rental System - Hệ Thống Cho Thuê Đa Năng (De Tai 17)")
+models.Base.metadata.create_all(bind=engine)
 
-# --- CẤU HÌNH CORS ---
-origins = [
-    "http://localhost",
-    "http://localhost:5500",
-    "http://127.0.0.1:5500",
-    "*"
-]
+app = FastAPI(title="ADMIN RENTAL SYSTEM (NO LOGIN)")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Tạo bảng database
-models.Base.metadata.create_all(bind=database.engine)
-
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @app.get("/")
-def read_root():
-    return {"message": "Hệ thống Cho Thuê Đa Năng (Nhà, Xe, Đồ dùng) đang chạy!"}
+def root():
+    return {"message": "Admin Rental System is running"}
 
-# --- API USER ---
+
+# ==================================================
+# USER
+# ==================================================
 @app.post("/users/", response_model=schemas.UserResponse)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email này đã tồn tại trong hệ thống!")
-    
-    fake_hashed_password = user.password + "notreallyhashed"
+    if db.query(models.User).filter(models.User.email == user.email).first():
+        raise HTTPException(status_code=400, detail="Email đã tồn tại")
+
+    if db.query(models.User).filter(models.User.username == user.username).first():
+        raise HTTPException(status_code=400, detail="Username đã tồn tại")
+
     new_user = models.User(
-        email=user.email, 
-        username=user.username, 
+        email=user.email,
+        username=user.username,
         full_name=user.full_name,
-        hashed_password=fake_hashed_password,
+        hashed_password=user.password + "_hash",  # demo
         role="user"
     )
     db.add(new_user)
@@ -59,129 +40,138 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
+
 @app.get("/users/", response_model=List[schemas.UserResponse])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = db.query(models.User).offset(skip).limit(limit).all()
-    return users
+def list_users(db: Session = Depends(get_db)):
+    return db.query(models.User).all()
 
-# --- API PROPERTY (NÂNG CẤP ĐA NGÀNH) ---
+
+# ==================================================
+# PROPERTY
+# ==================================================
 @app.post("/properties/", response_model=schemas.PropertyResponse)
-def create_property(prop: schemas.PropertyCreate, owner_id: int, db: Session = Depends(get_db)):
-    # Validate giá tiền
-    if prop.price < 0:
-        raise HTTPException(status_code=400, detail="Giá thuê không được âm!")
-
-    # Validate category hợp lệ (Tùy chọn, để chặt chẽ hơn)
-    valid_categories = ["real_estate", "vehicle", "item"]
-    if prop.category not in valid_categories:
-         raise HTTPException(status_code=400, detail="Loại tài sản không hợp lệ (chỉ chấp nhận: real_estate, vehicle, item)")
-
-    owner = db.query(models.User).filter(models.User.id == owner_id).first()
+def create_property(prop: schemas.PropertyCreate, db: Session = Depends(get_db)):
+    owner = db.query(models.User).filter(models.User.id == prop.owner_id).first()
     if not owner:
-        raise HTTPException(status_code=404, detail="Không tìm thấy chủ sở hữu ID này")
+        raise HTTPException(status_code=404, detail="Owner không tồn tại")
 
-    new_prop = models.Property(**prop.dict(), owner_id=owner_id)
+    new_prop = models.Property(
+        name=prop.name,
+        address=prop.address,
+        price=prop.price,
+        description=prop.description,
+        category=prop.category,
+        owner_id=prop.owner_id,
+        status="available"
+    )
     db.add(new_prop)
     db.commit()
     db.refresh(new_prop)
     return new_prop
 
+
 @app.get("/properties/", response_model=List[schemas.PropertyResponse])
-def read_properties(
-    skip: int = 0, 
-    limit: int = 100, 
-    min_price: Optional[float] = None, 
-    max_price: Optional[float] = None,
-    keyword: Optional[str] = None,
-    category: Optional[str] = None,     # <-- THÊM BỘ LỌC CATEGORY
-    db: Session = Depends(get_db)
-):
-    query = db.query(models.Property)
+def list_properties(db: Session = Depends(get_db)):
+    return db.query(models.Property).all()
 
-    # Logic lọc dữ liệu
-    if category:
-        query = query.filter(models.Property.category == category)
-    if min_price is not None:
-        query = query.filter(models.Property.price >= min_price)
-    if max_price is not None:
-        query = query.filter(models.Property.price <= max_price)
-    if keyword:
-        query = query.filter(models.Property.name.contains(keyword))
 
-    properties = query.offset(skip).limit(limit).all()
-    return properties
-
-# --- API CONTRACT (LOGIC GIỮ NGUYÊN) ---
+# ==================================================
+# CONTRACT
+# ==================================================
 @app.post("/contracts/", response_model=schemas.ContractResponse)
-def create_contract(contract: schemas.ContractCreate, db: Session = Depends(get_db)):
-    if contract.start_date >= contract.end_date:
-        raise HTTPException(status_code=400, detail="Ngày kết thúc phải sau ngày bắt đầu!")
-    
-    if contract.deposit_amount < 0:
-         raise HTTPException(status_code=400, detail="Tiền cọc không được âm!")
+def create_contract(data: schemas.ContractCreate, db: Session = Depends(get_db)):
+    # ---- validate date ----
+    if data.start_date >= data.end_date:
+        raise HTTPException(status_code=400, detail="Ngày bắt đầu phải nhỏ hơn ngày kết thúc")
 
-    db_property = db.query(models.Property).filter(models.Property.id == contract.property_id).first()
-    if not db_property:
+    prop = db.query(models.Property).filter(models.Property.id == data.property_id).first()
+    if not prop:
         raise HTTPException(status_code=404, detail="Tài sản không tồn tại")
-    
-    if db_property.status != "available":
-        raise HTTPException(status_code=400, detail="Tài sản này đang được thuê, vui lòng chọn cái khác!")
 
-    tenant = db.query(models.User).filter(models.User.email == contract.tenant_email).first()
+    if prop.status == "rented":
+        raise HTTPException(status_code=409, detail="Tài sản đang được thuê")
+
+    tenant = db.query(models.User).filter(models.User.email == data.tenant_email).first()
     if not tenant:
-        raise HTTPException(status_code=404, detail="Email khách thuê chưa đăng ký hệ thống")
+        raise HTTPException(status_code=404, detail="Khách hàng chưa tồn tại")
 
-    new_contract = models.Contract(
-        property_id=contract.property_id,
+    # ---- check overlap ----
+    overlap = db.query(models.Contract).filter(
+        models.Contract.property_id == data.property_id,
+        models.Contract.status == "active",
+        and_(
+            models.Contract.start_date <= data.end_date,
+            models.Contract.end_date >= data.start_date
+        )
+    ).first()
+
+    if overlap:
+        raise HTTPException(
+            status_code=409,
+            detail="Tài sản đã được thuê trong khoảng thời gian này"
+        )
+
+    # ---- tính tiền ----
+    days = (data.end_date - data.start_date).days
+
+    if data.rental_type == "daily":
+        total_price = days * prop.price
+    elif data.rental_type == "monthly":
+        months = (days + 29) // 30  # làm tròn lên theo tháng
+        total_price = months * prop.price
+    else:
+        raise HTTPException(status_code=400, detail="Loại thuê không hợp lệ")
+
+    contract = models.Contract(
+        property_id=data.property_id,
         tenant_id=tenant.id,
-        start_date=contract.start_date,
-        end_date=contract.end_date,
-        deposit=contract.deposit_amount,
-        is_active=True
+        start_date=data.start_date,
+        end_date=data.end_date,
+        total_price=total_price,
+        deposit=data.deposit,
+        status="active"
     )
-    
-    db_property.status = "rented"
-    
-    try:
-        db.add(new_contract)
-        db.add(db_property)
-        db.flush()
-        db.refresh(new_contract)
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Lỗi lưu DB: {str(e)}")
-    
-    return new_contract
+
+    # ---- cập nhật trạng thái tài sản nếu hợp đồng đang hiệu lực ----
+    if data.start_date <= date.today() <= data.end_date:
+        prop.status = "rented"
+
+    db.add(contract)
+    db.add(prop)
+    db.commit()
+    db.refresh(contract)
+    return contract
+
 
 @app.get("/contracts/", response_model=List[schemas.ContractResponse])
-def read_contracts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    contracts = db.query(models.Contract).offset(skip).limit(limit).all()
-    return contracts
+def list_contracts(db: Session = Depends(get_db)):
+    return db.query(models.Contract).all()
 
-# --- API PAYMENT ---
+
+# ==================================================
+# PAYMENT
+# ==================================================
 @app.post("/payments/", response_model=schemas.PaymentResponse)
-def create_payment(payment: schemas.PaymentCreate, db: Session = Depends(get_db)):
-    if payment.amount <= 0:
-        raise HTTPException(status_code=400, detail="Số tiền thanh toán phải lớn hơn 0!")
-
-    contract = db.query(models.Contract).filter(models.Contract.id == payment.contract_id).first()
+def create_payment(pay: schemas.PaymentCreate, db: Session = Depends(get_db)):
+    contract = db.query(models.Contract).filter(models.Contract.id == pay.contract_id).first()
     if not contract:
         raise HTTPException(status_code=404, detail="Hợp đồng không tồn tại")
 
-    new_payment = models.Payment(
-        contract_id=payment.contract_id,
-        amount=payment.amount,
-        payment_date=payment.payment_date,
-        note=payment.note,
-        is_paid=True
+    payment = models.Payment(
+        contract_id=pay.contract_id,
+        amount=pay.amount,
+        payment_date=pay.payment_date,
+        note=pay.note,
+        status="paid"
     )
-    db.add(new_payment)
+    db.add(payment)
     db.commit()
-    db.refresh(new_payment)
-    return new_payment
+    db.refresh(payment)
+    return payment
+
 
 @app.get("/contracts/{contract_id}/payments", response_model=List[schemas.PaymentResponse])
-def read_payments_by_contract(contract_id: int, db: Session = Depends(get_db)):
-    payments = db.query(models.Payment).filter(models.Payment.contract_id == contract_id).all()
-    return payments
+def list_payments(contract_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Payment).filter(
+        models.Payment.contract_id == contract_id
+    ).all()
