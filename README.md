@@ -24,10 +24,12 @@ Tính chi phí sửa chữa & trừ tiền cọc/bồi thường trực tiếp.
 Tài chính minh bạch: Theo dõi tiền cọc, đã thu, còn nợ real-time.
 
 
+```
 # 👉 Server chạy tại: http://localhost:8000
-
-# 👉 Docs API: http://localhost:5500
-
+```
+```
+👉 Docs API: http://localhost:5500
+```
 
 # ⚠️ Lưu ý quan trọng
 
@@ -37,7 +39,7 @@ User Admin mặc định: Hệ thống tự tạo khi có giao dịch đầu ti�
 
 ## 📂 Cấu trúc dự án
 
-```text
+```
 rental-project/
 ├── app/                    # Backend (API)
 │   ├── main.py             # Brain (API Logic)
@@ -53,3 +55,4 @@ rental-project/
 ├── .env
 ├── .gitignore
 └── README.md               # Documentation
+```
