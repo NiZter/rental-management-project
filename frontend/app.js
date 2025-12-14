@@ -1,9 +1,5 @@
-// ⚠️ QUAN TRỌNG: Khi deploy xong Backend trên Render, copy link đó dán vào đây
-// Ví dụ: const API_URL = "https://rental-pro-backend.onrender.com";
 
-// Hiện tại đang để localhost để test, khi nào có link Render thì đổi dòng dưới:
-const API_URL = "http://localhost:8000"; 
-// const API_URL = "LINK_RENDER_CUA_BAN_O_DAY"; 
+const API_URL = "https://rental-management-project.onrender.com"; 
 
 let paymentModal;
 
