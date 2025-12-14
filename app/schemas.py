@@ -1,8 +1,10 @@
 from pydantic import BaseModel
-from typing import Optional, List
-from datetime import date
+from typing import Optional
+from datetime import date, datetime
 
-# --- User Schemas ---
+# =======================
+# 1. USER SCHEMAS
+# =======================
 class UserBase(BaseModel):
     username: str
     email: str
@@ -18,12 +20,16 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
-# --- Property Schemas ---
+# =======================
+# 2. PROPERTY SCHEMAS (TÀI SẢN)
+# =======================
 class PropertyBase(BaseModel):
     name: str
     address: str
     price: float
     description: Optional[str] = None
+    # Thêm category để phân loại (real_estate, vehicle, item)
+    category: str = "real_estate"
 
 class PropertyCreate(PropertyBase):
     pass
@@ -35,26 +41,34 @@ class PropertyResponse(PropertyBase):
     class Config:
         from_attributes = True
 
-# --- Contract Schemas ---
+# =======================
+# 3. CONTRACT SCHEMAS (HỢP ĐỒNG)
+# =======================
 class ContractBase(BaseModel):
     start_date: date
     end_date: date
 
+# Schema dùng cho Input (Dữ liệu từ Frontend gửi lên)
 class ContractCreate(ContractBase):
     property_id: int
-    tenant_email: str
-    deposit_amount: float
+    tenant_email: str       # Dùng email để tìm user
+    deposit_amount: float   # Tên biến khớp với frontend
 
+# Schema dùng cho Output (Dữ liệu trả về từ Database)
 class ContractResponse(ContractBase):
     id: int
     property_id: int
     tenant_id: int
-    deposit: float
+    deposit: float          # Tên cột trong DB là deposit
     is_active: bool
+    created_at: Optional[datetime] = None
+    
     class Config:
         from_attributes = True
 
-# --- Payment Schemas ---
+# =======================
+# 4. PAYMENT SCHEMAS (THANH TOÁN)
+# =======================
 class PaymentBase(BaseModel):
     amount: float
     payment_date: date

@@ -19,14 +19,18 @@ class User(Base):
     contracts = relationship("Contract", back_populates="tenant")
 
 # --- 2. PROPERTY ---
+# Sửa lại class Property
 class Property(Base):
     __tablename__ = "properties"
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
-    address = Column(String)
+    address = Column(String) # Địa chỉ (hoặc nơi nhận xe/đồ)
     description = Column(String, nullable=True)
     price = Column(Float)
+    
+    category = Column(String, default="real_estate") 
+
     status = Column(String, default="available") 
     
     owner_id = Column(Integer, ForeignKey("users.id"))
