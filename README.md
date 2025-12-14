@@ -1,13 +1,14 @@
 # Rental Pro - Hệ Thống Quản Lý Cho Thuê
 
 Rental Pro là giải pháp quản lý tài sản toàn diện: Nhà trọ, Xe cộ, Thiết bị.
-"Code sạch, Logic chặt, Giao diện mượt."
 
+---
 ## 🚀 Live Demo
 ```text
 https://rental-management-project.vercel.app/
 ```
 
+---
 ## 🔥 Tính Năng Nổi Bật
 
 ### 1. Đa dạng tài sản
@@ -32,7 +33,7 @@ Tính chi phí sửa chữa & trừ tiền cọc/bồi thường trực tiếp.
 
 Theo dõi tiền cọc, đã thu, còn nợ real-time.
 
-
+---
 ### 👉 Server (Backend):
 ```text
 http://localhost:8000
@@ -43,40 +44,45 @@ http://localhost:8000
 http://localhost:5500
 ```
 
+===
 ## 📥 Clone project về máy
 ### 1. Clone source code từ GitHub
+```
 git clone https://github.com/NiZter/rental-management-project.git
+```
 
 ### 2. Di chuyển vào thư mục project
-cd rental-management-project
+```cd rental-management-project```
 
 ### 3. Tạo môi trường ảo
-python -m venv venv
+```python -m venv venv```
 
 ### 4. Kích hoạt môi trường ảo
 #### Windows
-venv\Scripts\activate
+```venv\Scripts\activate```
 
 #### Linux / macOS
-source venv/bin/activate
+```source venv/bin/activate
+```
 
 ### 5. Cài đặt thư viện cần thiết
-pip install -r requirements.txt
+```pip install -r requirements.txt```
 
 ### 6. Tạo file môi trường
-cp .env.example .env
+```cp .env.example .env```
 
-####Sau đó chỉnh trong .env:
-DATABASE_URL=postgresql://username:password@localhost:5432/rental_db
+#### Sau đó chỉnh trong .env:
+```DATABASE_URL=postgresql://username:password@localhost:5432/rental_db```
 
 ### 7. Chạy FastAPI server
-uvicorn app.main:app --reload
+```uvicorn app.main:app --reload```
 
-
+---
 ## ⚠️ Lưu ý quan trọng
 
 File reset_db.py: Chạy file này (python reset_db.py) sẽ XÓA TRẮNG database và tạo lại bảng. Chỉ dùng khi mới setup hoặc muốn reset dữ liệu.
 
+---
 ## 📂 Cấu trúc dự án
 
 ```
