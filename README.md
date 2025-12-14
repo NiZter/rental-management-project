@@ -23,28 +23,19 @@ Tính chi phí sửa chữa & trừ tiền cọc/bồi thường trực tiếp.
 
 Tài chính minh bạch: Theo dõi tiền cọc, đã thu, còn nợ real-time.
 
-# Cài thư viện
-pip install fastapi uvicorn sqlalchemy psycopg2-binary python-dotenv pydantic
 
-# Chạy Server
-uvicorn main:app --reload
+# 👉 Server chạy tại: http://localhost:8000
+
+# 👉 Docs API: http://localhost:5500
 
 
-👉 Server chạy tại: http://localhost:8000
-
-👉 Docs API: http://localhost:5500
-
-4. Frontend
-
-Mở ./frontend/index.html.
-
-⚠️ Lưu ý quan trọng
+# ⚠️ Lưu ý quan trọng
 
 File reset_db.py: Chạy file này (python reset_db.py) sẽ XÓA TRẮNG database và tạo lại bảng. Chỉ dùng khi mới setup hoặc muốn reset dữ liệu.
 
 User Admin mặc định: Hệ thống tự tạo khi có giao dịch đầu tiên (Logic Lazy Load).
 
-📂 Cấu trúc dự án
+# 📂 Cấu trúc dự án
 
 rental-project/
 ├── main.py             # Brain (API Logic)
