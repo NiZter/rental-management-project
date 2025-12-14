@@ -10,11 +10,11 @@ https://rental-management-project.vercel.app/
 
 ## 🔥 Tính Năng Nổi Bật
 
-###1. Đa dạng tài sản
+### 1. Đa dạng tài sản
 
 Không chỉ phòng trọ, quản lý được cả xe hơi, máy ảnh, lều trại... (real_estate, vehicle, item).
 
-###2. Hợp đồng thông minh
+### 2. Hợp đồng thông minh
 
 Tự động tính tiền theo ngày/tháng.
 
@@ -22,13 +22,13 @@ Chặn trùng lịch (Conflict Detection): Không bao giờ lo cho thuê trùng 
 
 Xuất PDF: In hợp đồng chuyên nghiệp chỉ với 1 click.
 
-###3. Theo dõi hư hỏng (Damage Tracking)
+### 3. Theo dõi hư hỏng (Damage Tracking)
 
 Ghi nhận hư hỏng kèm mức độ (🔴 Nặng, 🟡 Vừa, 🟢 Nhẹ).
 
 Tính chi phí sửa chữa & trừ tiền cọc/bồi thường trực tiếp.
 
-###4. Tài chính minh bạch
+### 4. Tài chính minh bạch
 
 Theo dõi tiền cọc, đã thu, còn nợ real-time.
 
