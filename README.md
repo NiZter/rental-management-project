@@ -1,4 +1,4 @@
-# 🏠 Rental Pro - Hệ Thống Quản Lý Cho Thuê (Full Stack)
+# ---Rental Pro - Hệ Thống Quản Lý Cho Thuê---
 
 Rental Pro là giải pháp quản lý tài sản toàn diện: Nhà trọ, Xe cộ, Thiết bị.
 "Code sạch, Logic chặt, Giao diện mượt."
