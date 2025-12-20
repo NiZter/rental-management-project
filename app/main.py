@@ -253,6 +253,8 @@ def create_contract(data: schemas.ContractCreate, db: Session = Depends(get_db))
 
         db.commit()
         db.refresh(contract)
+
+        contract.tenant_email = contract.tenant.email
         
     except Exception as e:
         db.rollback()
