@@ -18,7 +18,7 @@ DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "rental_db")
 
-SQLALCHEMY_DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+SQLALCHEMY_DATABASE_URL = f"postgresql://rental_db_7bpv_user:uQVFLFCGPtAF5lLli7NiHojfvMFA67O7@dpg-d4vebveuk2gs739cbpgg-a.singapore-postgres.render.com/rental_db_7bpv"
 
 try:
     engine = create_engine(SQLALCHEMY_DATABASE_URL)
