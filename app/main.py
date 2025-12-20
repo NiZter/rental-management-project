@@ -215,20 +215,24 @@ def update_payment(payment_id: int, pay:  schemas.PaymentCreate, db: Session = D
     return payment
 
 
-@app.delete("/payments/{payment_id}")
-def delete_payment(payment_id: int, db: Session = Depends(get_db)):
-    """Xóa thanh toán"""
-    payment = db. query(models.Payment).filter(models.Payment.id == payment_id).first()
-    if not payment:
-        raise HTTPException(status_code=404, detail="Thanh toán không tồn tại")
-
-    db.delete(payment)
+@app.delete("/properties/{property_id}")
+def delete_property(property_id: int, db: Session = Depends(get_db)):
+    """Xóa tài sản"""
+    prop = db.query(models.Property).filter(models.Property.id == property_id).first()
+    if not prop:
+        raise HTTPException(status_code=404, detail="Tài sản không tồn tại")
+    
+    active_contract = db.query(models.Contract).filter(
+        models.Contract.property_id == property_id,
+        models.Contract.status == "active"
+    ).first()
+    
+    if active_contract:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Không thể xóa - tài sản đang có hợp đồng HĐ#{active_contract.id}"
+        )
+    
+    db.delete(prop)
     db.commit()
-    return {"message":  f"Đã xóa thanh toán #{payment_id}"}
-
-
-@app.get("/contracts/{contract_id}/payments", response_model=List[schemas. PaymentResponse])
-def list_payments(contract_id: int, db: Session = Depends(get_db)):
-    return db.query(models.Payment).filter(
-        models.Payment.contract_id == contract_id
-    ).all()
+    return {"message": "Tài sản đã bị xóa"}
