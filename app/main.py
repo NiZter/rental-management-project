@@ -32,7 +32,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"message": "System is running with Postgres Sequence Fix"}
+    return {"message": "Hihihihi ckao cau nka"}
 
 
 # ==================================================
