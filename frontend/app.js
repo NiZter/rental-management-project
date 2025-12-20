@@ -352,11 +352,14 @@ async function openPaymentModal(cid, status) {
             const contract = contracts.find(c => c.id === cid);
             if (contract) {
                 totalPrice = contract.total_price || 0;
+                if (emailDisplay) emailDisplay.innerText = contract.tenant_email;
             }
         }
     } catch (err) {
         console.error(err);
     }
+
+    
 
     const tbody = document.getElementById("paymentHistoryList");
     if (tbody) tbody.innerHTML = "<tr><td colspan='4' class='text-center text-muted py-4'>Đang tải... </td></tr>";
