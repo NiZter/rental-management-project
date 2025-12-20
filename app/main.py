@@ -159,3 +159,16 @@ def list_properties(
         query = query.filter(models.Property.name.contains(keyword))
 
     return query.all()
+
+@app.get("/contracts/", response_model=List[schemas.ContractResponse])
+def list_contracts(db: Session = Depends(get_db)):
+    contracts = db.query(models.Contract).all()
+    
+    # Logic gán email thủ công để tránh lỗi Schema
+    for c in contracts:
+        if c.tenant:
+            c.tenant_email = c.tenant.email
+        else:
+            c.tenant_email = "Không xác định"
+            
+    return contracts
