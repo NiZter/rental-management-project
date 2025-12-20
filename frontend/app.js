@@ -236,6 +236,12 @@ async function loadContracts() {
                             <div class="contract-item-title">HĐ #${c.id}</div>
                             <span class="badge badge-success">${c.status || 'Active'}</span>
                         </div>
+
+                        <div style="font-size: 13px; color: #4b5563; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-envelope" style="color: #667eea;"></i> 
+                            <span>${c.tenant_email}</span>
+                        </div>
+                        
                         <div class="contract-item-dates">
                             <i class="fas fa-calendar"></i> ${c.start_date} → ${c.end_date}
                         </div>
