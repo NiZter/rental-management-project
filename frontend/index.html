@@ -682,6 +682,44 @@
                         <h6 class="mb-0" style="color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase;">Trạng Thái</h6>
                         <span class="badge badge-success" id="modalContractStatus">Active</span>
                     </div>
+
+                    <hr class="my-4">
+                    <h6 class="section-title text-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Báo Cáo Hư Hỏng & Sự Cố
+                    </h6>
+                    
+                    <form id="damageForm" class="mb-4 p-3" style="background: #fff5f5; border: 1px solid #fc8181; border-radius: 8px;">
+                        <div class="mb-2">
+                            <label class="form-label small">Mô tả hư hỏng</label>
+                            <input type="text" class="form-control form-control-sm" id="damageDesc" placeholder="VD: Trầy xước sơn xe, vỡ kính..." required>
+                        </div>
+                        
+                        <div class="row g-2 mb-2">
+                            <div class="col-4">
+                                <label class="form-label small">Mức độ</label>
+                                <select class="form-select form-select-sm" id="damageSeverity">
+                                    <option value="low">🟢 Nhẹ</option>
+                                    <option value="medium" selected>🟡 Trung bình</option>
+                                    <option value="high">🔴 Nghiêm trọng</option>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small">Chi phí sửa (dự kiến)</label>
+                                <input type="number" class="form-control form-control-sm" id="repairCost" value="0">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small">Ngày phát hiện</label>
+                                <input type="date" class="form-control form-control-sm" id="damageDate" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-danger btn-sm w-100">
+                            <i class="fas fa-bug"></i> Ghi nhận sự cố
+                        </button>
+                    </form>
+                    
+                    <div id="damageList" class="mt-3">
+                        </div>
+                    
                 </div>
 
                 <!-- PAYMENT INFO CARD -->
