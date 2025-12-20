@@ -13,7 +13,7 @@ from .  import models, schemas
 # Tạo bảng nếu chưa có
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="ADMIN RENTAL SYSTEM (AUTO PILOT - PG FIX)")
+app = FastAPI(title="hihihihihi ckao cau nka")
 
 # --- CẤU HÌNH CORS ---
 origins = [
