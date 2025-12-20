@@ -60,7 +60,6 @@ class ContractResponse(ContractBase):
     id: int
     property_id:  int
     tenant_id: int
-    tenant_email: str
     deposit: float
     total_price: float
     status:  str
