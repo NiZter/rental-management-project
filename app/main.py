@@ -263,8 +263,11 @@ def create_contract(data: schemas.ContractCreate, db: Session = Depends(get_db))
 
 @app. get("/contracts/", response_model=List[schemas.ContractResponse])
 def list_contracts(db: Session = Depends(get_db)):
-    return db.query(models.Contract).all()
-
+    contracts = db.query(models.Contract).all()
+    for c in contracts:
+        c.tenant_email = c.tenant.email
+        
+    return contracts
 
 @app.delete("/contracts/{contract_id}")
 def delete_contract(contract_id: int, db: Session = Depends(get_db)):
