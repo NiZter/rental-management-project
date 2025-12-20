@@ -64,6 +64,8 @@ class ContractResponse(ContractBase):
     total_price: float
     status:  str
     created_at: Optional[datetime] = None
+    tenant: Optional[UserResponse] = None # ✅ QUAN TRỌNG: Lấy info khách thuê
+    
     class Config:
         from_attributes = True
 
@@ -82,7 +84,7 @@ class PaymentResponse(PaymentBase):
     class Config:
         from_attributes = True
 
-# --- Damage Report ✅ MỚI ---
+# --- Damage Report ---
 class DamageReportBase(BaseModel):
     description: str
     severity: str = "medium"
