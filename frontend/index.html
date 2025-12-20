@@ -673,54 +673,134 @@
                 <input type="hidden" id="payContractId">
                 
                 <!-- HỢP ĐỒNG INFO -->
-                <div class="d-flex justify-content-between align-items-center mb-4 pb-3" style="border-bottom: 2px solid #e5e7eb;">
-                    <div>
-                        <h6 class="mb-0" style="color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase;">Mã Hợp Đồng</h6>
-                        <h5 class="mb-0" style="color: #667eea;"><span id="modalContractIdDisplay">#0</span></h5>
-                    </div>
-                    <div>
-                        <h6 class="mb-0" style="color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase;">Trạng Thái</h6>
-                        <span class="badge badge-success" id="modalContractStatus">Active</span>
-                    </div>
+<style>
+    .contract-header {
+        background: linear-gradient(to right, #f8f9fa, #ffffff);
+        border-radius: 12px;
+        padding: 15px;
+        border: 1px solid #e9ecef;
+    }
+    .status-pill {
+        padding: 0.5em 1em;
+        border-radius: 50px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    .report-card {
+        background: #fff;
+        border: 1px solid #eee;
+        border-left: 4px solid #dc3545; /* Vạch đỏ bên trái để báo hiệu sự cố */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    .report-card:hover {
+        box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+    }
+    .input-group-text {
+        background-color: #f8f9fa;
+        border-right: none;
+        color: #6c757d;
+    }
+    .form-control, .form-select {
+        border-left: none;
+    }
+    .form-control:focus, .form-select:focus {
+        box-shadow: none;
+        border-color: #ced4da;
+    }
+    .input-group:focus-within .input-group-text {
+        border-color: #80bdff;
+    }
+    .input-group:focus-within .form-control {
+        border-color: #80bdff;
+    }
+</style>
 
-                    <hr class="my-4">
-                    <h6 class="section-title text-danger">
-                        <i class="fas fa-exclamation-triangle"></i> Báo Cáo Hư Hỏng & Sự Cố
-                    </h6>
-                    
-                    <form id="damageForm" class="mb-4 p-3" style="background: #fff5f5; border: 1px solid #fc8181; border-radius: 8px;">
-                        <div class="mb-2">
-                            <label class="form-label small">Mô tả hư hỏng</label>
-                            <input type="text" class="form-control form-control-sm" id="damageDesc" placeholder="VD: Trầy xước sơn xe, vỡ kính..." required>
-                        </div>
-                        
-                        <div class="row g-2 mb-2">
-                            <div class="col-4">
-                                <label class="form-label small">Mức độ</label>
-                                <select class="form-select form-select-sm" id="damageSeverity">
-                                    <option value="low">🟢 Nhẹ</option>
-                                    <option value="medium" selected>🟡 Trung bình</option>
-                                    <option value="high">🔴 Nghiêm trọng</option>
-                                </select>
-                            </div>
-                            <div class="col-4">
-                                <label class="form-label small">Chi phí sửa (dự kiến)</label>
-                                <input type="number" class="form-control form-control-sm" id="repairCost" value="0">
-                            </div>
-                            <div class="col-4">
-                                <label class="form-label small">Ngày phát hiện</label>
-                                <input type="date" class="form-control form-control-sm" id="damageDate" required>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-danger btn-sm w-100">
-                            <i class="fas fa-bug"></i> Ghi nhận sự cố
-                        </button>
-                    </form>
-                    
-                    <div id="damageList" class="mt-3">
-                        </div>
-                    
+<div class="container-fluid p-0">
+    
+    <div class="contract-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <div class="text-muted small text-uppercase fw-bold mb-1">
+                <i class="fas fa-file-contract me-1"></i> Mã Hợp Đồng
+            </div>
+            <h4 class="mb-0 text-primary fw-bold" style="letter-spacing: -0.5px;">
+                <span id="modalContractIdDisplay">#Loading...</span>
+            </h4>
+        </div>
+        <div class="text-end">
+            <div class="text-muted small text-uppercase fw-bold mb-1">Trạng Thái</div>
+            <span class="badge bg-success rounded-pill status-pill shadow-sm" id="modalContractStatus">
+                <i class="fas fa-check-circle me-1"></i> Active
+            </span>
+        </div>
+    </div>
+
+    <div class="report-section">
+        <div class="d-flex align-items-center mb-3">
+            <h6 class="mb-0 fw-bold text-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>Ghi Nhận Sự Cố & Hư Hỏng
+            </h6>
+            <span class="ms-auto text-muted small fst-italic">Vui lòng điền đầy đủ thông tin</span>
+        </div>
+
+        <form id="damageForm" class="report-card p-4 mb-4">
+            
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-secondary">Mô tả chi tiết</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-pen"></i></span>
+                    <input type="text" class="form-control" id="damageDesc" 
+                           placeholder="VD: Trầy xước cản trước, vỡ đèn hậu..." required>
                 </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary">Mức độ</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-tachometer-alt"></i></span>
+                        <select class="form-select" id="damageSeverity">
+                            <option value="low" class="text-success">🟢 Nhẹ</option>
+                            <option value="medium" selected class="text-warning">🟡 Trung bình</option>
+                            <option value="high" class="text-danger">🔴 Nghiêm trọng</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary">Chi phí dự kiến</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₫</span>
+                        <input type="number" class="form-control" id="repairCost" value="0" min="0">
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary">Ngày phát hiện</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                        <input type="date" class="form-control" id="damageDate" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 text-end">
+                <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">
+                    <i class="fas fa-plus-circle me-2"></i>Thêm Sự Cố
+                </button>
+            </div>
+        </form>
+
+        <div id="damageList" class="mt-3">
+            <div class="text-center py-4 text-muted border border-dashed rounded bg-light">
+                <i class="fas fa-clipboard-check fa-2x mb-2 text-secondary opacity-50"></i>
+                <p class="small mb-0">Chưa có sự cố nào được ghi nhận.</p>
+            </div>
+        </div>
+    </div>
+
+</div>
 
                 <!-- PAYMENT INFO CARD -->
                 <div class="payment-info-card">
