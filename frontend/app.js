@@ -336,6 +336,7 @@ async function openPaymentModal(cid, status) {
     const payContractId = document.getElementById("payContractId");
     const modalStatus = document.getElementById("modalContractStatus");
     const payDate = document.getElementById("payDate");
+    const emailDisplay = document.getElementById("modalContractEmail");
 
     if (modalDisplay) modalDisplay.innerText = "#" + cid;
     if (payContractId) payContractId.value = cid;
