@@ -172,3 +172,63 @@ def list_contracts(db: Session = Depends(get_db)):
             c.tenant_email = "Không xác định"
             
     return contracts
+
+# ==================================================
+# PAYMENT API
+# ==================================================
+@app.post("/payments/", response_model=schemas.PaymentResponse)
+def create_payment(pay: schemas.PaymentCreate, db: Session = Depends(get_db)):
+    contract = db.query(models.Contract).filter(models.Contract.id == pay.contract_id).first()
+    if not contract: 
+        raise HTTPException(status_code=404, detail="Hợp đồng không tồn tại")
+
+    payment = models.Payment(
+        contract_id=pay.contract_id,
+        amount=pay.amount,
+        payment_date=pay.payment_date,
+        note=pay.note,
+        is_paid=True
+    )
+    db.add(payment)
+    db.commit()
+    db.refresh(payment)
+    return payment
+
+
+@app.put("/payments/{payment_id}", response_model=schemas.PaymentResponse)
+def update_payment(payment_id: int, pay:  schemas.PaymentCreate, db: Session = Depends(get_db)):
+    """Cập nhật thanh toán"""
+    payment = db.query(models.Payment).filter(models.Payment.id == payment_id).first()
+    if not payment:
+        raise HTTPException(status_code=404, detail="Thanh toán không tồn tại")
+
+    contract = db.query(models.Contract).filter(models.Contract.id == pay.contract_id).first()
+    if not contract: 
+        raise HTTPException(status_code=404, detail="Hợp đồng không tồn tại")
+
+    payment.amount = pay.amount
+    payment.payment_date = pay. payment_date
+    payment.note = pay.note
+    
+    db.commit()
+    db.refresh(payment)
+    return payment
+
+
+@app.delete("/payments/{payment_id}")
+def delete_payment(payment_id: int, db: Session = Depends(get_db)):
+    """Xóa thanh toán"""
+    payment = db. query(models.Payment).filter(models.Payment.id == payment_id).first()
+    if not payment:
+        raise HTTPException(status_code=404, detail="Thanh toán không tồn tại")
+
+    db.delete(payment)
+    db.commit()
+    return {"message":  f"Đã xóa thanh toán #{payment_id}"}
+
+
+@app.get("/contracts/{contract_id}/payments", response_model=List[schemas. PaymentResponse])
+def list_payments(contract_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Payment).filter(
+        models.Payment.contract_id == contract_id
+    ).all()
