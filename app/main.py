@@ -13,10 +13,15 @@ from .  import models, schemas
 # Tạo bảng nếu chưa có
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="ADMIN RENTAL SYSTEM")
+app = FastAPI(title="ADMIN RENTAL SYSTEM (AUTO PILOT - PG FIX)")
 
 # --- CẤU HÌNH CORS ---
-origins = ["*"] # Mở full cho dễ demo
+origins = [
+    "http://localhost",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "*"
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -27,7 +32,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"message": "System is running!"}
+    return {"message": "System is running with Postgres Sequence Fix"}
 
 
 # ==================================================
@@ -49,9 +54,11 @@ def get_or_create_admin(db: Session):
             db.add(admin)
             db.commit()
             db.refresh(admin)
-        except Exception:
+        except Exception as e:
             db.rollback()
             admin = db.query(models.User).filter(models.User.username == "admin").first()
+            if not admin:
+                raise HTTPException(status_code=500, detail=f"Cannot create admin: {str(e)}")
     return admin
 
 def get_or_create_tenant(db: Session, email: str):
@@ -336,7 +343,7 @@ def list_payments(contract_id: int, db: Session = Depends(get_db)):
 
 
 # ==================================================
-# CONTRACT DOWNLOAD PDF
+# CONTRACT DOWNLOAD PDF ✅ MỚI
 # ==================================================
 @app.get("/contracts/{contract_id}/download")
 def download_contract(contract_id:  int, db: Session = Depends(get_db)):
@@ -352,9 +359,11 @@ def download_contract(contract_id:  int, db: Session = Depends(get_db)):
     paid = sum(p.amount for p in payments)
     remaining = contract.total_price - paid
 
+    # Xác định trạng thái
     status_text = "✅ ĐÃ THANH TOÁN ĐỦ" if remaining <= 0 else f"⏳ CÒN THIẾU {remaining: ,.0f}đ"
     status_class = "status-paid" if remaining <= 0 else "status-pending"
     
+    # Xây dựng bảng thanh toán
     payment_rows = ""
     if not payments:
         payment_rows = '<tr><td colspan="4" style="text-align: center; color: #6b7280;">Chưa có giao dịch nào</td></tr>'
@@ -374,37 +383,156 @@ def download_contract(contract_id:  int, db: Session = Depends(get_db)):
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hợp Đồng #{contract_id}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hợp Đồng Cho Thuê #{contract_id}</title>
     <style>
-        body {{ font-family: 'Arial', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px 20px; color: #333; }}
-        .header {{ text-align: center; border-bottom: 3px solid #667eea; padding-bottom: 20px; margin-bottom: 30px; }}
-        .header h1 {{ margin: 0; color: #667eea; font-size: 28px; }}
-        .contract-number {{ color: #6b7280; font-size: 14px; margin-top: 5px; }}
-        .section {{ margin-bottom: 30px; }}
-        .section-title {{ background:  #f3f4f6; padding: 12px 15px; font-weight: bold; color: #667eea; margin-bottom: 15px; border-left: 4px solid #667eea; }}
-        .info-row {{ display: flex; margin-bottom: 12px; padding: 8px 0; border-bottom:  1px solid #e5e7eb; }}
-        .info-label {{ flex: 0 0 200px; font-weight: bold; color: #374151; }}
-        .info-value {{ flex:  1; color: #1f2937; }}
-        .highlight {{ background:  #fef08a; padding: 15px; border-radius:  8px; margin-bottom: 20px; }}
-        .highlight-row {{ display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; }}
-        .footer {{ margin-top: 40px; padding-top:  20px; border-top: 2px solid #e5e7eb; text-align: center; font-size: 12px; color: #6b7280; }}
-        .signature-area {{ display: flex; justify-content: space-around; margin-top: 40px; padding-top: 30px; }}
-        .signature-box {{ text-align: center; flex: 1; }}
-        .signature-box-line {{ border-bottom: 2px solid #000; margin:  50px 0 10px 0; min-width: 150px; }}
-        .signature-box-label {{ font-size: 12px; font-weight: bold; }}
-        .status-badge {{ display: inline-block; padding: 8px 16px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; }}
-        .status-paid {{ background: #d1fae5; color: #065f46; }}
-        .status-pending {{ background: #fed7aa; color: #92400e; }}
-        table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; }}
-        thead {{ background:  #f3f4f6; }}
-        th {{ padding: 10px; text-align:  left; border-bottom:  2px solid #667eea; }}
-        td {{ padding: 10px; border-bottom:  1px solid #e5e7eb; }}
-        .print-button {{ padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 20px; font-weight: bold; }}
-        @media print {{ body {{ padding: 0; }} .print-button {{ display: none; }} }}
+        body {{
+            font-family: 'Arial', sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            color: #333;
+        }}
+        .header {{
+            text-align: center;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }}
+        .header h1 {{
+            margin: 0;
+            color: #667eea;
+            font-size: 28px;
+        }}
+        . contract-number {{
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 5px;
+        }}
+        . section {{
+            margin-bottom: 30px;
+        }}
+        . section-title {{
+            background:  #f3f4f6;
+            padding: 12px 15px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }}
+        . info-row {{
+            display: flex;
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-bottom:  1px solid #e5e7eb;
+        }}
+        .info-label {{
+            flex: 0 0 200px;
+            font-weight: bold;
+            color: #374151;
+        }}
+        . info-value {{
+            flex:  1;
+            color: #1f2937;
+        }}
+        .highlight {{
+            background:  #fef08a;
+            padding: 15px;
+            border-radius:  8px;
+            margin-bottom: 20px;
+        }}
+        .highlight-row {{
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }}
+        .footer {{
+            margin-top: 40px;
+            padding-top:  20px;
+            border-top: 2px solid #e5e7eb;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+        }}
+        .signature-area {{
+            display: flex;
+            justify-content: space-around;
+            margin-top: 40px;
+            padding-top: 30px;
+        }}
+        .signature-box {{
+            text-align: center;
+            flex: 1;
+        }}
+        .signature-box-line {{
+            border-bottom: 2px solid #000;
+            margin:  50px 0 10px 0;
+            min-width: 150px;
+        }}
+        . signature-box-label {{
+            font-size: 12px;
+            font-weight: bold;
+        }}
+        .status-badge {{
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }}
+        . status-paid {{
+            background: #d1fae5;
+            color: #065f46;
+        }}
+        .status-pending {{
+            background: #fed7aa;
+            color: #92400e;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }}
+        thead {{
+            background:  #f3f4f6;
+        }}
+        th {{
+            padding: 10px;
+            text-align:  left;
+            border-bottom:  2px solid #667eea;
+        }}
+        td {{
+            padding: 10px;
+            border-bottom:  1px solid #e5e7eb;
+        }}
+        . print-button {{
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }}
+        .print-button:hover {{
+            background: #764ba2;
+        }}
+        @media print {{
+            body {{
+                padding: 0;
+            }}
+            .print-button {{
+                display: none;
+            }}
+        }}
     </style>
 </head>
 <body>
-    <button class="print-button" onclick="window.print()">🖨️ In / In PDF</button>
+    <button class="print-button" onclick="window.print()">
+        🖨️ In / In PDF
+    </button>
 
     <div class="header">
         <h1>HỢP ĐỒNG CHO THUÊ</h1>
@@ -412,60 +540,157 @@ def download_contract(contract_id:  int, db: Session = Depends(get_db)):
     </div>
 
     <div class="section">
-        <div class="status-badge {status_class}">{status_text}</div>
+        <div class="status-badge {status_class}">
+            {status_text}
+        </div>
     </div>
 
     <div class="section">
-        <div class="section-title">🏠 TÀI SẢN CHO THUÊ</div>
-        <div class="info-row"><div class="info-label">Tên tài sản:</div><div class="info-value">{prop.name}</div></div>
-        <div class="info-row"><div class="info-label">Địa chỉ:</div><div class="info-value">{prop.address}</div></div>
-        <div class="info-row"><div class="info-label">Giá thuê:</div><div class="info-value">{prop.price: ,.0f}đ / ngày</div></div>
+        <div class="section-title">📋 THÔNG TIN HỢP ĐỒNG</div>
+        <div class="info-row">
+            <div class="info-label">Mã hợp đồng:</div>
+            <div class="info-value">HĐ-{contract_id: 04d}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Trạng thái:</div>
+            <div class="info-value">{contract.status. upper()}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Ngày bắt đầu:</div>
+            <div class="info-value">{contract.start_date.strftime('%d/%m/%Y')}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Ngày kết thúc:</div>
+            <div class="info-value">{contract.end_date.strftime('%d/%m/%Y')}</div>
+        </div>
     </div>
 
     <div class="section">
-        <div class="section-title">👤 KHÁCH THUÊ</div>
-        <div class="info-row"><div class="info-label">Tên: </div><div class="info-value">{tenant.full_name or tenant.username}</div></div>
-        <div class="info-row"><div class="info-label">Email:</div><div class="info-value">{tenant. email}</div></div>
+        <div class="section-title">🏠 THÔNG TIN TÀI SẢN CHO THUÊ</div>
+        <div class="info-row">
+            <div class="info-label">Tên tài sản:</div>
+            <div class="info-value">{prop.name}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Địa chỉ:</div>
+            <div class="info-value">{prop.address}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Loại: </div>
+            <div class="info-value">{prop.category}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Giá thuê/ngày: </div>
+            <div class="info-value">{prop.price: ,.0f}đ</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Trạng thái tài sản:</div>
+            <div class="info-value">{prop.status}</div>
+        </div>
     </div>
 
     <div class="section">
-        <div class="section-title">💰 THANH TOÁN</div>
+        <div class="section-title">👤 THÔNG TIN KHÁCH THUÊ</div>
+        <div class="info-row">
+            <div class="info-label">Tên: </div>
+            <div class="info-value">{tenant.full_name or tenant.username}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Email:</div>
+            <div class="info-value">{tenant. email}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Tên đăng nhập:</div>
+            <div class="info-value">{tenant.username}</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">💰 THÔNG TIN THANH TOÁN</div>
         <div class="highlight">
-            <div class="highlight-row"><span>Tổng tiền:</span><span>{contract.total_price:,.0f}đ</span></div>
-            <div class="highlight-row"><span>Đã thanh toán:</span><span style="color: #10b981;">{paid:,.0f}đ</span></div>
+            <div class="highlight-row">
+                <span>Tổng tiền hợp đồng:</span>
+                <span>{contract.total_price:,.0f}đ</span>
+            </div>
+            <div class="highlight-row">
+                <span>Tiền cọc:</span>
+                <span>{contract.deposit: ,.0f}đ</span>
+            </div>
+            <div class="highlight-row">
+                <span>Đã thanh toán:</span>
+                <span style="color: #10b981;">{paid:,.0f}đ</span>
+            </div>
             <div class="highlight-row" style="color: {'#065f46' if remaining <= 0 else '#dc2626'}; font-size: 18px; margin-top: 10px;">
-                <span>Còn thiếu:</span><span>{remaining:,.0f}đ</span>
+                <span>Còn thiếu:</span>
+                <span>{remaining:,.0f}đ</span>
             </div>
         </div>
     </div>
 
     <div class="section">
-        <div class="section-title">📊 LỊCH SỬ GIAO DỊCH</div>
+        <div class="section-title">📊 LỊCH SỬ THANH TOÁN</div>
         <table>
-            <thead><tr><th>STT</th><th>Ngày</th><th>Ghi chú</th><th style="text-align: right;">Số tiền</th></tr></thead>
-            <tbody>{payment_rows}</tbody>
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Ngày</th>
+                    <th>Ghi chú</th>
+                    <th style="text-align:  right;">Số tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                {payment_rows}
+            </tbody>
         </table>
     </div>
 
+    <div class="section">
+        <div class="section-title">📝 ĐIỀU KHOẢN VÀ ĐIỀU KIỆN</div>
+        <ul style="line-height: 1.8; color: #1f2937;">
+            <li>Khách thuê phải trả tiền đúng hạn theo hợp đồng</li>
+            <li>Khách thuê chịu trách nhiệm bảo quản tài sản</li>
+            <li>Chủ nhà sẽ ghi nhận mọi thanh toán ngay khi nhận tiền</li>
+            <li>Trong trường hợp hư hỏng, khách thuê phải bồi thường theo định giá</li>
+            <li>Hợp đồng sẽ tự động kết thúc khi hết thời gian cho thuê</li>
+        </ul>
+    </div>
+
     <div class="signature-area">
-        <div class="signature-box"><div class="signature-box-label">Chủ nhà</div><div class="signature-box-line"></div></div>
-        <div class="signature-box"><div class="signature-box-label">Khách thuê</div><div class="signature-box-line"></div></div>
+        <div class="signature-box">
+            <div class="signature-box-label">Chủ nhà/Chủ tài sản</div>
+            <div class="signature-box-line"></div>
+            <small>Ký tên, ngày tháng</small>
+        </div>
+        <div class="signature-box">
+            <div class="signature-box-label">Khách thuê</div>
+            <div class="signature-box-line"></div>
+            <small>Ký tên, ngày tháng</small>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Hợp đồng này được tạo bởi Rental Pro | © 2024</p>
+        <p>Ngày tạo: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}</p>
     </div>
 </body>
 </html>
     """
+    
     return HTMLResponse(content=html_content)
 
 # ==================================================
-# DAMAGE TRACKING API
+# DAMAGE TRACKING API ✅ MỚI
 # ==================================================
 @app.post("/damage-reports/", response_model=schemas.DamageReportResponse)
 def create_damage_report(damage:  schemas.DamageReportCreate, db: Session = Depends(get_db)):
+    """Báo cáo hư hỏng"""
     contract = db.query(models.Contract).filter(models.Contract.id == damage.contract_id).first()
-    if not contract: raise HTTPException(status_code=404, detail="Hợp đồng không tồn tại")
+    if not contract: 
+        raise HTTPException(status_code=404, detail="Hợp đồng không tồn tại")
     
     prop = db.query(models.Property).filter(models.Property.id == damage.property_id).first()
-    if not prop: raise HTTPException(status_code=404, detail="Tài sản không tồn tại")
+    if not prop:
+        raise HTTPException(status_code=404, detail="Tài sản không tồn tại")
     
     new_damage = models.DamageReport(
         contract_id=damage.contract_id,
@@ -476,30 +701,60 @@ def create_damage_report(damage:  schemas.DamageReportCreate, db: Session = Depe
         reported_date=damage.reported_date,
         status="pending"
     )
+    
     db.add(new_damage)
     db.commit()
     db.refresh(new_damage)
     return new_damage
 
+
 @app.get("/contracts/{contract_id}/damages", response_model=List[schemas. DamageReportResponse])
 def list_damages(contract_id: int, db: Session = Depends(get_db)):
-    return db.query(models.DamageReport).filter(models.DamageReport.contract_id == contract_id).all()
+    """Lấy danh sách hư hỏng của hợp đồng"""
+    return db.query(models.DamageReport).filter(
+        models.DamageReport.contract_id == contract_id
+    ).all()
 
-@app.patch("/damage-reports/{damage_id}/mark-repaired")
-def mark_repaired(damage_id: int, db: Session = Depends(get_db)):
-    report = db.query(models.DamageReport).filter(models.DamageReport. id == damage_id).first()
-    if not report: raise HTTPException(status_code=404, detail="Báo cáo không tồn tại")
+
+@app.put("/damage-reports/{damage_id}", response_model=schemas.DamageReportResponse)
+def update_damage(damage_id: int, damage:  schemas.DamageReportCreate, db: Session = Depends(get_db)):
+    """Cập nhật báo cáo hư hỏng"""
+    report = db.query(models.DamageReport).filter(models.DamageReport.id == damage_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Báo cáo không tồn tại")
     
-    report.status = "repaired"
-    report.repaired_date = date.today()
+    report.description = damage. description
+    report.severity = damage.severity
+    report.repair_cost = damage.repair_cost
+    report.reported_date = damage.reported_date
+    
     db.commit()
     db.refresh(report)
     return report
 
+
+@app.patch("/damage-reports/{damage_id}/mark-repaired")
+def mark_repaired(damage_id: int, db: Session = Depends(get_db)):
+    """Đánh dấu đã sửa chữa"""
+    report = db.query(models.DamageReport).filter(models.DamageReport. id == damage_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Báo cáo không tồn tại")
+    
+    report.status = "repaired"
+    report.repaired_date = date.today()
+    
+    db.commit()
+    db.refresh(report)
+    return report
+
+
 @app.delete("/damage-reports/{damage_id}")
 def delete_damage(damage_id: int, db: Session = Depends(get_db)):
+    """Xóa báo cáo hư hỏng"""
     report = db.query(models.DamageReport).filter(models.DamageReport.id == damage_id).first()
-    if not report: raise HTTPException(status_code=404, detail="Báo cáo không tồn tại")
+    if not report:
+        raise HTTPException(status_code=404, detail="Báo cáo không tồn tại")
+    
     db.delete(report)
     db.commit()
     return {"message": "Đã xóa báo cáo hư hỏng"}
